@@ -1,0 +1,68 @@
+http://{{ inventory_hostname }} {
+  log {{ caddy_log_dir }}/{{ caddy_log_file }}
+  proxy /v2ray localhost:8964 {
+    websocket
+    header_upstream -Origin
+  }
+}
+https://{{ inventory_hostname }}/help {
+  log {{ caddy_log_dir }}/{{ caddy_log_file }}
+  tls {{ letsencrypt_email }}
+  root /var/www/help
+  basicauth / {{ caddy_basicauth_username }} {{ caddy_basicauth_password }} {
+{% if caddy_basicauth_realm is defined and caddy_basicauth_realm|length > 0 %}
+    realm "{{ caddy_basicauth_realm }}"
+{% endif %}
+  }
+}
+https://{{ inventory_hostname }} {
+  log {{ caddy_log_dir }}/{{ caddy_log_file }}
+  tls {{ letsencrypt_email }}
+  proxy /v2ray localhost:8964 {
+    websocket
+    header_upstream -Origin
+  }
+  proxy /dns-query {{ doh_servers | map('quote') | join(' ') }} {
+    policy first
+    health_check /health
+  }
+  proxy /resolve https://dns.google.com {
+    policy first
+    health_check /health
+  }
+}
+{% if cloudflare_domain is defined and cloudflare_domain|length > 0 %}
+http://{{ cloudflare_domain }} {
+  log {{ caddy_log_dir }}/{{ caddy_log_file }}
+  proxy /v2ray localhost:8964 {
+    websocket
+    header_upstream -Origin
+  }
+}
+https://{{ cloudflare_domain }}/help {
+  log {{ caddy_log_dir }}/{{ caddy_log_file }}
+  tls {{ letsencrypt_email }}
+  root /var/www/help
+  basicauth / {{ caddy_basicauth_username }} {{ caddy_basicauth_password }} {
+{% if caddy_basicauth_realm is defined and caddy_basicauth_realm|length > 0 %}
+    realm "{{ caddy_basicauth_realm }}"
+{% endif %}
+  }
+}
+https://{{ cloudflare_domain }} {
+  log {{ caddy_log_dir }}/{{ caddy_log_file }}
+  tls {{ letsencrypt_email }}
+  proxy /v2ray localhost:8964 {
+    websocket
+    header_upstream -Origin
+  }
+  proxy /dns-query {{ doh_servers | map('quote') | join(' ') }} {
+    policy first
+    health_check /health
+  }
+  proxy /resolve https://dns.google.com {
+    policy first
+    health_check /health
+  }
+}
+{% endif %}

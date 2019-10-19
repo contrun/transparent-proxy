@@ -1,0 +1,2 @@
+v2ray_update: no
+v2ray_dir: "{{ ansible_env.HOME }}/.v2ray"

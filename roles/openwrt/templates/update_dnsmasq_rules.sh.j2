@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -xeuo pipefail
+bash <(curl -L -s https://raw.githubusercontent.com/felixonmars/dnsmasq-china-list/master/install.sh)
+wget https://raw.githubusercontent.com/LisonFan/china_ip_list/master/china_ipv4_list -O "/tmp/{{ china_ip_list_filename }}" && mv "/tmp/{{ china_ip_list_filename }}" "{{ routing_rules_directory }}/{{ china_ip_list_filename }}"
+/etc/init.d/dnsmasq reload

@@ -1,0 +1,8 @@
+- hosts: "{{ host }}"
+  remote_user: "{{ user }}"
+  become: "{{ become | default(\"yes\") }}"
+  vars_files:
+    - "vars/main.yml"
+    - [ "vars/main.local.yml" ]
+  roles:
+    - role: "{{ role }}"

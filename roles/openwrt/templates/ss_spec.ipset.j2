@@ -1,0 +1,6 @@
+{% for ip in bypass_lan_ip_list %}
+add ss_spec_lan_bypass {{ ip }}
+{% endfor %}
+{% for ip in bypass_wan_ip_list %}
+add ss_spec_wan_ac {{ ip }}
+{% endfor %}

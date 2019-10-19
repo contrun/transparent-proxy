@@ -1,0 +1,180 @@
+---
+- name: Set opkg packages to install
+  set_fact:
+    opkg_packages:
+      - coreutils
+      - luci
+      - bash
+      - zsh
+      - python3
+      - unzip
+      - ipset
+      - git
+      - git-http
+      - ca-bundle
+      - curl
+      - wget
+      - https_dns_proxy
+
+- name: Install opkg packages
+  shell: |
+      opkg install {{ opkg_packages | join(' ') }}
+
+- name: Ensure directories exists
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - /etc/v2ray
+    - /etc/dnsmasq.d
+    - /opt/v2ray_conf
+    - /opt/bin
+    - /usr/local/bin
+    - /opt/tmp
+    - /etc/crontabs
+    - "{{ routing_rules_directory }}"
+
+- name: Check v2ray exists
+  stat:
+    path: "/tmp/v2ray-installer.sh"
+  register: v2ray_stat_result
+
+- name: Check ss-nat exists
+  stat:
+    path: "/tmp/v2ray/v2ray.zip"
+  register: ssnat_stat_result
+
+- name: Download v2ray
+  include_role:
+    name: v2ray-client
+  vars:
+    v2ray_dir: /opt/v2ray
+    v2ray_update: "{{ update }}"
+  when: (v2ray_stat_result.stat.exists == False) or (update == "yes")
+
+- name: Download ss-nat
+  get_url:
+    url: https://raw.githubusercontent.com/shadowsocks/shadowsocks-libev/master/src/ss-nat
+    dest: /usr/local/bin
+    mode: 0755
+    force: yes
+  when: (ssnat_stat_result.stat.exists == False) or (update == "yes")
+
+- name: Copy v2ray config to /opt
+  copy:
+    src: "./artifacts/v2ray-{{ server }}-config.json"
+    dest: "/opt/v2ray_conf/"
+    force: yes
+
+- name: Copy v2ray config to /etc
+  copy:
+    src: "./artifacts/v2ray-{{ server }}-config.json"
+    dest: "/etc/v2ray/config.json"
+    force: yes
+
+- name: Copy china ip list
+  copy:
+    src: "{{ china_ip_list_filename }}"
+    dest: "{{ routing_rules_directory }}/{{ china_ip_list_filename }}"
+    force: no
+
+- name: Get China IP List
+  get_url:
+    url: https://raw.githubusercontent.com/LisonFan/china_ip_list/master/china_ipv4_list
+    dest: "{{ routing_rules_directory }}/{{ china_ip_list_filename }}"
+  when: (update == "yes")
+
+- name: Generate ss_spec ipset
+  template:
+    src: ss_spec.ipset.j2
+    dest: "{{ routing_rules_directory }}/ss_spec.ipset"
+
+- name: Generate doh server list
+  template:
+    src: doh_servers.j2
+    dest: "{{ routing_rules_directory }}/{{ doh_servers_list }}"
+
+- name: Generate directly connecting domain list
+  template:
+    src: directly_connecting_domains.j2
+    dest: "{{ routing_rules_directory }}/{{ directly_connecting_domain_list }}"
+
+- name: Remove old https_dns_proxy config
+  shell: |
+    while uci -q delete https_dns_proxy.@https_dns_proxy[0]; do :; done
+
+- name: Change https_dns_proxy config
+  shell: |
+    uci set https_dns_proxy.dns{{ index }}="https_dns_proxy"
+    uci set https_dns_proxy.dns{{ index }}.listen_addr="127.0.0.1"
+    uci set https_dns_proxy.dns{{ index }}.listen_port="{{ 10052 - index}}"
+    uci set https_dns_proxy.dns{{ index }}.user="nobody"
+    uci set https_dns_proxy.dns{{ index }}.group="nogroup"
+    uci set https_dns_proxy.dns{{ index }}.url_prefix="{{ item }}"
+  loop: "{{ ([server + '/resolve?'] + (doh_servers | map('regex_replace', '$', '/dns-query?') | list)) | map('regex_replace', '^', 'https://') | list }}"
+  loop_control:
+    index_var: index
+
+- name: Commit https_dns_proxy config changes
+  shell: |
+    uci commit https_dns_proxy
+  notify: reload https_dns_proxy
+
+- name: Create v2ray-redir init.d
+  template:
+    src: v2ray-redir.j2
+    dest: /etc/init.d/v2ray-redir
+    owner: root
+    group: root
+    mode: 0755
+  notify: reload v2ray-redir
+
+- name: Set domains to be resolved with China dns servers
+  set_fact:
+    domains_to_be_resolved_with_china_dns_servers: "{{ domains_to_be_resolved_with_china_dns_servers + [cloudflare_domain] }}"
+  when: cloudflare_domain is defined
+
+- name: Sanitize domains_to_be_resolved_with_china_dns_servers
+  set_fact:
+    domains_to_be_resolved_with_china_dns_servers: "{{ (domains_to_be_resolved_with_china_dns_servers + [server]) | unique }}"
+
+- name: Create dnsmasq china list
+  shell: "bash <(curl -L -s https://raw.githubusercontent.com/felixonmars/dnsmasq-china-list/master/install.sh)"
+  args:
+    executable: "/bin/bash"
+  when: (update == "yes")
+
+- name: Create dnsmasq.conf
+  template:
+    src: dnsmasq.conf.j2
+    dest: /etc/dnsmasq.conf
+  notify: reload dnsmasq
+
+- name: Change resolv.conf
+  lineinfile:
+    path: /etc/resolv.conf
+    insertbefore: BOF
+    regexp: '^nameserver=127.0.0.1'
+    line: 'nameserver=127.0.0.1'
+
+- name: Ensure cron started
+  service:
+    name: cron
+    enabled: yes
+    state: started
+
+- name: Copy update_dnsmasq_rules.sh
+  template:
+    src: update_dnsmasq_rules.sh.j2
+    dest: /usr/local/bin/update_dnsmasq_rules.sh
+    mode: 0755
+    force: yes
+
+- name: Set crontab for update_dnsmasq_rules.sh
+  cron:
+    cron_file: /etc/crontabs/update_dnsmasq_rules
+    user: root
+    name: "update_dnsmasq_rules"
+    minute: "11"
+    hour: "5,2"
+    job: /usr/local/bin/update_dnsmasq_rules.sh

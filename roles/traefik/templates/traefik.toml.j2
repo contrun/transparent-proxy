@@ -1,0 +1,24 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":80"
+
+  [entryPoints.websecure]
+    address = ":443"
+
+[certificatesResolvers.letsencrypt.acme]
+  email = "{{ letsencrypt_email }}"
+  storage = "/var/run/acme.json"
+  [certificatesResolvers.letsencrypt.acme.httpChallenge]
+    # used during the challenge
+    entryPoint = "web"
+
+[log]
+  level = "DEBUG"
+  filePath = "/tmp/traefik.log"
+
+[providers.file]
+  filename = "{{ traefik_v2ray_config_file }}"

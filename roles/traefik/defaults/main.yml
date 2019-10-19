@@ -1,0 +1,14 @@
+---
+# defaults file for kibatic.traefik
+traefik_install_dir: /usr/local/bin
+traefik_binary_url: https://github.com/containous/traefik/releases/download/v2.0.1/traefik_v2.0.1_linux_amd64.tar.gz
+traefik_bin_path: "{{ traefik_install_dir }}/traefik"
+traefik_v2ray_config_file: /etc/traefik_v2ray.toml
+traefik_v2ray_template: traefik_v2ray.toml
+traefik_config_file: /etc/traefik.toml
+traefik_template: traefik.toml
+traefik_systemd_unit_template: traefik.service
+traefik_systemd_unit_dest: /etc/systemd/system/traefik.service
+traefik_update: no
+v2ray_port: 8964
+letsencrypt_email: irreg@outlook.com

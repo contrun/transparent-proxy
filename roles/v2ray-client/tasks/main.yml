@@ -1,0 +1,62 @@
+- name: Set v2ray directory
+  set_fact:
+    v2ray_dir: "{{ ansible_env.HOME }}/.v2ray"
+  when: v2ray_dir is not defined
+
+- name: Check v2ray installer exists
+  stat:
+    path: "/tmp/v2ray-installer.sh"
+  register: v2ray_installer_stat_result
+
+- name: Check v2ray tarball exists
+  stat:
+    path: "/tmp/v2ray/v2ray.zip"
+  register: v2ray_tarball_stat_result
+
+- name: Check v2ray existance
+  stat:
+    path: "{{ v2ray_dir }}"
+  register: v2ray_dir_stat_result
+
+- name: Download v2ray installer
+  get_url:
+    url: https://raw.githubusercontent.com/v2ray/v2ray-core/master/release/install-release.sh
+    dest: /tmp/v2ray-installer.sh
+    mode: 0755
+    force: yes
+  when: (v2ray_update == "yes") or (v2ray_installer_stat_result.stat.exists == False)
+
+- name: Fix v2ray installer step 1
+  replace:
+    path: /tmp/v2ray-installer.sh
+    regexp: '#!/bin/bash'
+    replace: '#!/usr/bin/env bash'
+
+- name: Fix v2ray installer step 2
+  replace:
+    path: /tmp/v2ray-installer.sh
+    regexp: 'downloadV2Ray\s*\(\)\{'
+    replace: 'myDownloadV2Ray() {'
+
+- name: Fix v2ray installer step 3
+  replace:
+    path: /tmp/v2ray-installer.sh
+    regexp: 'downloadV2Ray'
+    replace: '{ myDownloadV2Ray; exit; }'
+
+- name: Download v2ray tarball
+  shell: "/tmp/v2ray-installer.sh"
+  when: (v2ray_update == "yes") or (v2ray_tarball_stat_result.stat.exists == False)
+
+- name: Ensure v2ray directory exists
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - "{{ v2ray_dir }}"
+
+- name: Unzip v2ray
+  unarchive:
+    src: /tmp/v2ray/v2ray.zip
+    dest: "{{ v2ray_dir }}"
+    remote_src: yes

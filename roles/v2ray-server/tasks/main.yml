@@ -1,0 +1,66 @@
+- name: Sanity check
+  assert:
+    that:
+      - v2ray_uuids is defined and (v2ray_uuids|length>0)
+
+- name: Set v2ray artifacts directory
+  set_fact:
+    v2ray_artifacts_dir: /var/www/help/v2ray
+  when: v2ray_artifacts_dir is not defined
+
+- name: Check that the v2ray bin exists
+  stat:
+    path: "/usr/bin/v2ray/v2ray"
+  register: v2ray_bin_stat_result
+
+- name: Install v2ray
+  shell: "bash <(curl -L -s https://raw.githubusercontent.com/v2ray/v2ray-core/master/release/install-release.sh)"
+  args:
+    executable: /bin/bash
+  become: on
+  become_user: root
+  when: (v2ray_update == "yes") or (v2ray_bin_stat_result.stat.exists == False)
+
+- name: Copy v2ray server config
+  template:
+    src: "server-config.json.j2"
+    dest: /etc/v2ray/config.json
+  notify:
+    - restart v2ray
+
+- name: Save list of v2ray server
+  set_fact:
+    servers:
+      - "{{ inventory_hostname }}"
+
+- name: Save list of v2ray server
+  set_fact:
+    servers: "{{ (servers + [cloudflare_domain]) | unique }}"
+  when: cloudflare_domain is defined
+
+- name: Clean v2ray artifacts path
+  file:
+    state: absent
+    path: "{{ v2ray_artifacts_dir }}/"
+
+- name: Ensure v2ray artifacts directory exists
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - "{{ v2ray_artifacts_dir }}"
+
+- name: Render v2ray client config file
+  template:
+    src: "client-config.json.j2"
+    dest: "{{ v2ray_artifacts_dir }}/v2ray-{{ v2ray_server }}-config.json"
+  loop: "{{ servers }}"
+  loop_control:
+    loop_var: v2ray_server
+
+- name: Fetch v2ray client config file
+  fetch:
+    src: "{{ v2ray_artifacts_dir }}/v2ray-{{ item }}-config.json"
+    dest: "artifacts/v2ray-{{ item }}-config.json"
+    flat: yes
+  with_items: "{{ servers }}"

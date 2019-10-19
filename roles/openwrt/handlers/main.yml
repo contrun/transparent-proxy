@@ -1,0 +1,18 @@
+---
+- name: reload v2ray-redir
+  service:
+    name: v2ray-redir
+    enabled: yes
+    state: reloaded
+
+- name: reload dnsmasq
+  service:
+    name: dnsmasq
+    enabled: yes
+    state: reloaded
+
+- name: reload https_dns_proxy
+  service:
+    name: https_dns_proxy
+    enabled: yes
+    state: reloaded

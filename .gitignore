@@ -1,0 +1,4 @@
+*.retry
+/artifacts/
+__pycache__/
+/vars/main.local.yml

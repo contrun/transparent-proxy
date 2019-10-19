@@ -1,0 +1,5 @@
+update: no
+lan_interface: br-lan
+routing_rules_directory: /opt/routing_rules
+doh_servers_list: doh_servers
+china_ip_list_filename: china_ipv4_list

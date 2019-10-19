@@ -1,0 +1,44 @@
+host: v2ray
+user: ubuntu
+# See https://github.com/curl/curl/wiki/DNS-over-HTTPS
+doh_server_in_china:
+  - "dns.rubyfish.cn"
+doh_servers:
+  - "doh-2.seby.io"
+  - "dns.containerpi.com"
+  - "doh.securedns.eu"
+  - "dns.dns-over-https.com"
+  - "doh-jp.blahdns.com"
+v2ray_upstream_dns_servers:
+  - "8.8.8.8"
+  - "1.1.1.1"
+  - "9.9.9.9"
+# Seem to be alive
+global_dns_servers:
+  - "203.80.96.10"
+  - "74.82.42.42"
+  - "168.126.63.1"
+  - "1.0.0.1"
+china_dns_servers:
+  - "202.141.162.123"
+  - "180.76.76.76"
+  - "223.6.6.6"
+  - "114.114.114.114"
+# ss-nat needs those domain names
+domains_to_be_resolved_with_china_dns_servers: []
+bypass_lan_ip_list: []
+bypass_wan_ip_list: []
+directly_connecting_domain_list: []
+letsencrypt_email: name@example.com
+v2ray_uuids: []
+v2ray_uuids:
+  - "4907676f-408d-45b6-9080-c8e57e497ce3"
+  - "d32b93bd-878c-4f98-9f29-5f8bbb3cf4d9"
+  - "584c3368-cc64-4220-a6e0-dde3b1a61b63"
+  - "b7cda467-a1f5-4f3d-bd68-79fa0392897e"
+  - "9ea0bd6b-bc82-47fa-aac8-0113f0c054f5"
+  - "e6a649e5-f7fe-44d2-ae21-1eea934d2b16"
+  - "a92a679a-cbf2-415e-ba01-603b0296eee0"
+  - "b22ed6b3-4b7c-4c19-bb8f-78027c56a563"
+  - "65cb2ad4-34e4-4699-ae12-23a17d353139"
+  - "a99a51cc-68f9-4e9a-aa5a-2a6242c4f536"

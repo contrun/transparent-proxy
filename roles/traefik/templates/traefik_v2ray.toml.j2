@@ -1,0 +1,44 @@
+[http]
+  # Add the router
+  [http.routers]
+  {% if cloudflare_domain is defined and cloudflare_domain|length > 0 %}
+    [http.routers.cloudflare]
+      service = "v2ray"
+      rule = "Host(`{{ cloudflare_domain }}`)"
+      [http.routers.cloudflare.tls]
+        certResolver = "letsencrypt"
+        [[http.routers.cloudflare.tls.domains]]
+          main = "{{ cloudflare_domain }}"
+  {% endif %}
+    [http.routers.v2ray]
+      service = "v2ray"
+      # rule = "Host(`{{ inventory_hostname }}`) && "Path(`/v2ray`)"
+      rule = "Host(`{{ inventory_hostname }}`)"
+      [http.routers.v2ray.tls]
+        certResolver = "letsencrypt"
+        [[http.routers.v2ray.tls.domains]]
+          main = "{{ inventory_hostname }}"
+
+    [http.routers.reverse-google]
+      # entryPoints = ["web"]
+      middlewares = ["my-basic-auth"]
+      service = "reverse-google"
+      rule = "Path(`/foo`)"
+
+    # Add the middleware
+    [http.middlewares]
+      [http.middlewares.my-basic-auth.basicAuth]
+        users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+                  "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
+        usersFile = "etc/traefik/.htpasswd"
+
+    # Add the service
+    [http.services]
+      [http.services.reverse-google]
+        [http.services.reverse-google.loadBalancer]
+          [[http.services.reverse-google.loadBalancer.servers]]
+            url = "https://google.com/"
+      [http.services.v2ray]
+        [http.services.v2ray.loadBalancer]
+          [[http.services.v2ray.loadBalancer.servers]]
+            url = "http://localhost:8964/"

@@ -1,0 +1,81 @@
+# tasks file for kibatic.traefik
+---
+
+- name: Check that the traefik bin exists
+  stat:
+    path: "{{ traefik_bin_path }}"
+  register: traefik_bin_stat_result
+
+- name: Ensure traefik service is stopped before traefik update
+  service:
+    name: traefik
+    state: stopped
+    enabled: yes
+  when: traefik_update == "yes"
+
+- name: Download Traefik binary
+  unarchive:
+    remote_src: yes
+    src: "{{ item.url }}"
+    dest: "{{ item.dest }}"
+    exclude:
+      - CHANGELOG.md
+      - LICENSE.md
+    owner: root
+    group: root
+    mode: 0755
+    keep_newer: "{{ traefik_update }}"
+  with_items:
+    - url: "{{ traefik_binary_url }}"
+      dest: "{{ traefik_install_dir }}"
+  become: on
+  become_user: root
+  when: (traefik_update == "yes") or (traefik_bin_stat_result.stat.exists == False)
+
+- name: Create traefik systemd unit
+  template:
+    src: "{{ traefik_systemd_unit_template }}.j2"
+    dest: "{{ traefik_systemd_unit_dest }}"
+    owner: root
+    group: root
+    mode: 0644
+  become: on
+  become_user: root
+  notify:
+    - Restart traefik
+
+- name: Ensure install & config directory exists
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - "{{ traefik_install_dir }}"
+
+- name: Copy v2ray traefik config file
+  template:
+    src: "{{ traefik_v2ray_template }}.j2"
+    dest: "{{ traefik_v2ray_config_file }}"
+    owner: root
+    group: root
+    mode: 0744
+  become: on
+  become_user: root
+
+- name: Copy traefik config file
+  template:
+    src: "{{ traefik_template }}.j2"
+    dest: "{{ traefik_config_file }}"
+    owner: root
+    group: root
+    mode: 0744
+  become: on
+  become_user: root
+  notify:
+    - Restart traefik
+
+- name: Ensure traefik service is enabled and running
+  systemd:
+    name: traefik
+    state: started
+    enabled: yes
+    daemon_reload: yes

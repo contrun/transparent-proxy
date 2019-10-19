@@ -1,0 +1,58 @@
+{
+  "log": {
+    "loglevel": "warning"
+  },
+  "inbounds": [
+{% for dns_server in v2ray_upstream_dns_servers %}
+    {
+      "port": {{ 10052 + loop.index }},
+      "protocol": "dokodemo-door",
+      "settings": {
+        "address": "{{ dns_server }}",
+        "port": 53,
+        "network": "udp"
+      }
+    },
+{% endfor %}
+    {
+      "port": 1081,
+      "listen": "0.0.0.0",
+      "protocol": "socks",
+      "settings": {}
+    },
+    {
+      "port": 1082,
+      "protocol": "dokodemo-door",
+      "settings": {
+        "network": "tcp",
+        "followRedirect": true
+      }
+    },
+    {
+      "port": 8880,
+      "protocol": "http",
+      "settings": {}
+    }
+  ],
+  "outbounds": [
+    {
+      "protocol": "vmess",
+      "settings": {
+        "vnext": [
+          {
+            "address": "{{ v2ray_server }}",
+            "port": 443,
+            "users": {{ [dict(v2ray_uuids | zip_longest([], fillvalue='')) | dict2items | map('json_query','{id:key}') | list | random] | to_json }}
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "ws",
+        "security": "tls",
+        "wsSettings": {
+          "path": "/v2ray"
+        }
+      }
+    }
+  ]
+}
