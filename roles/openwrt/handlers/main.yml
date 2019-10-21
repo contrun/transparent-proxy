@@ -1,5 +1,5 @@
 ---
-- name: reload v2ray-redir
+- name: restart v2ray-redir
   service:
     name: v2ray-redir
     enabled: yes

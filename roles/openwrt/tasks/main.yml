@@ -71,6 +71,7 @@
     src: "./artifacts/v2ray-{{ server }}-config.json"
     dest: "/etc/v2ray/config.json"
     force: yes
+  notify: restart v2ray-redir
 
 - name: Copy china ip list
   copy:
@@ -127,7 +128,7 @@
     owner: root
     group: root
     mode: 0755
-  notify: reload v2ray-redir
+  notify: restart v2ray-redir
 
 - name: Set domains to be resolved with China dns servers
   set_fact:
