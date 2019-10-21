@@ -26,7 +26,7 @@
     src: "server-config.json.j2"
     dest: /etc/v2ray/config.json
   notify:
-    - restart v2ray
+    - Restart v2ray
 
 - name: Save list of v2ray server
   set_fact:
