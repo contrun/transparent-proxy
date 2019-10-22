@@ -1,9 +1,10 @@
-Easier transparent non-Chinese server traffic redirection to v2ray server.
+Easier transparent non-Chinese server traffic redirection to v2ray, shadowsocks server.
 
 # About
 
 ## Features
 - set up v2ray servers with websocket over tls as transport layer
+- set up shadowsocks-libev
 - automatically obtain letsencrypt tls certificate using [caddy](https://caddyserver.com/)
 - use [dns over https](https://github.com/aarond10/https_dns_proxy) and [v2ray dokodemo-door](https://v2ray.com/chapter_02/protocols/dokodemo.html) to avoid dns poisoning
 - resolve Chinese domains with dirtier but possibly faster dns servers using [dnsmasq-china-list](https://github.com/felixonmars/dnsmasq-china-list)
@@ -13,6 +14,7 @@ Easier transparent non-Chinese server traffic redirection to v2ray server.
 
 ## Ansible roles
 - v2ray-server, installing v2ray in a vps
+- shadowsocks-libev-server, installing shadowsocks-libev in a vps
 - v2ray-client, downloading v2ray binaries
 - caddy, front-end http server, used as reverse proxy to v2ray server
 - traefik, deprecated reverse proxy
@@ -66,6 +68,14 @@ v2ray.example.com
 user=ubuntu
 become=yes
 letsencrypt_email=test@example.com
+
+[myShadowsocksLibevServer]
+v2ray.example.com
+
+[myShadowsocksLibevServer:vars]
+user=ubuntu
+become=yes
+letsencrypt_email=test@example.com
 ```
 
 ## Use bbr
@@ -82,10 +92,14 @@ ansible-playbook playbook.yml -i inventory -e role=caddy -e host=myV2rayServer
 ```
 ansible-playbook playbook.yml -i inventory -e role=v2ray-server -e host=myV2rayServer
 ```
+## Set up shadowsocks-libev-server
+```
+ansible-playbook playbook.yml -i inventory -e role=shadowsocks-libev-server -e host=myShadowsocksLibevServer
+```
 
 ## Set up openwrt
 ```
-ansible-playbook playbook.yml -i inventory -e role=openwrt -e host=myRouter -e server=v2ray.example.com
+ansible-playbook playbook.yml -i inventory -e role=openwrt -e host=myRouter -e server=v2ray.example.com -e program=shadowsocks-libev
 ```
 
 Voilà!
@@ -98,6 +112,7 @@ This project is built on top of following projects.
 - [caddy-ansible](https://github.com/antoiner77/caddy-ansible)
 - [dnsmasq-china-list](https://github.com/felixonmars/dnsmasq-china-list)
 - [ansible-traefik](https://github.com/kibatic/ansible-traefik)
+- [shadowsocks-libev-ansible](https://github.com/vfreex/shadowsocks-libev-ansible)
 
 # Related projects
 - [kexue-gateway](https://github.com/wi1dcard/kexue-gateway/)
