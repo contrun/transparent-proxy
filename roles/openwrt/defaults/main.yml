@@ -1,5 +1,6 @@
 update: no
 lan_interface: br-lan
 routing_rules_directory: /opt/routing_rules
-doh_servers_list: doh_servers
+doh_servers_file: doh_servers
 china_ip_list_filename: china_ipv4_list
+directly_connecting_domains_file: directly_connecting_domains

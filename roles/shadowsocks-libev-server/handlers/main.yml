@@ -1,0 +1,5 @@
+---
+- name: Restart shadowsocks-libev-server@
+  systemd:
+    name: "shadowsocks-libev-server@{{ ss_server_instance }}"
+    state: restarted

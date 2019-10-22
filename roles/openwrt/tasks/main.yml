@@ -15,10 +15,23 @@
       - curl
       - wget
       - https_dns_proxy
+      - shadowsocks-client
+      - shadowsocks-libev-config
+      - shadowsocks-libev-ss-local
+      - shadowsocks-libev-ss-redir
+      - shadowsocks-libev-ss-rules
+      - shadowsocks-libev-ss-server
+      - shadowsocks-libev-ss-tunnel
+      - iptables-mod-conntrack-extra
+
+- name: Update opkg packages
+  shell: |
+    opkg update
+  when: (update == "yes")
 
 - name: Install opkg packages
   shell: |
-      opkg install {{ opkg_packages | join(' ') }}
+    opkg install {{ opkg_packages | join(' ') }}
 
 - name: Ensure directories exists
   file:
@@ -26,8 +39,10 @@
     state: directory
   loop:
     - /etc/v2ray
+    - /etc/shadowsocks-libev
     - /etc/dnsmasq.d
-    - /opt/v2ray_conf
+    - /opt/conf.d/shadowsocks-libev
+    - /opt/conf.d/v2ray
     - /opt/bin
     - /usr/local/bin
     - /opt/tmp
@@ -38,6 +53,7 @@
   stat:
     path: "/tmp/v2ray-installer.sh"
   register: v2ray_stat_result
+  when: program == 'v2ray'
 
 - name: Check ss-nat exists
   stat:
@@ -50,7 +66,7 @@
   vars:
     v2ray_dir: /opt/v2ray
     v2ray_update: "{{ update }}"
-  when: (v2ray_stat_result.stat.exists == False) or (update == "yes")
+  when: (program == 'v2ray') and ((v2ray_stat_result.stat.exists == False) or (update == "yes"))
 
 - name: Download ss-nat
   get_url:
@@ -60,24 +76,46 @@
     force: yes
   when: (ssnat_stat_result.stat.exists == False) or (update == "yes")
 
-- name: stop v2ray-redir
+- name: Create items in init.d
+  template:
+    src: "{{ item }}.j2"
+    dest: "/etc/init.d/{{ item }}"
+    owner: root
+    group: root
+    mode: 0755
+  with_items:
+    - v2ray-redir
+    - shadowsocks-libev-redir
+
+- name: Stop services if not enable_service
   service:
-    name: v2ray-redir
+    name: "{{ item }}"
     state: stopped
+  with_items:
+    - v2ray-redir
+    - shadowsocks-libev-redir
   when: enable_service != 'yes'
 
-- name: Copy v2ray config to /opt
+- name: Copy config to /opt
   copy:
-    src: "./artifacts/v2ray-{{ server }}-config.json"
-    dest: "/opt/v2ray_conf/"
+    src: "./artifacts/{{ item }}-{{ server }}-config.json"
+    dest: "/opt//opt/conf.d/{{ item }}/"
     force: yes
+  when: "program == '{{ item }}'"
+  with_items:
+    - v2ray
+    - shadowsocks-libev
 
-- name: Copy v2ray config to /etc
+- name: Copy config to /etc
   copy:
-    src: "./artifacts/v2ray-{{ server }}-config.json"
-    dest: "/etc/v2ray/config.json"
+    src: "./artifacts/{{ item }}-{{ server }}-config.json"
+    dest: "/etc/{{ item }}/config.json"
     force: yes
-  notify: restart v2ray-redir
+  notify: "restart {{ item }}-redir"
+  when: "program == '{{ item }}'"
+  with_items:
+    - v2ray
+    - shadowsocks-libev
 
 - name: Copy china ip list
   copy:
@@ -99,12 +137,12 @@
 - name: Generate doh server list
   template:
     src: doh_servers.j2
-    dest: "{{ routing_rules_directory }}/{{ doh_servers_list }}"
+    dest: "{{ routing_rules_directory }}/{{ doh_servers_file }}"
 
 - name: Generate directly connecting domain list
   template:
     src: directly_connecting_domains.j2
-    dest: "{{ routing_rules_directory }}/{{ directly_connecting_domain_list }}"
+    dest: "{{ routing_rules_directory }}/{{ directly_connecting_domains_file }}"
 
 - name: Remove old https_dns_proxy config
   shell: |
@@ -126,15 +164,6 @@
   shell: |
     uci commit https_dns_proxy
   notify: reload https_dns_proxy
-
-- name: Create v2ray-redir init.d
-  template:
-    src: v2ray-redir.j2
-    dest: /etc/init.d/v2ray-redir
-    owner: root
-    group: root
-    mode: 0755
-  notify: restart v2ray-redir
 
 - name: Set domains to be resolved with China dns servers
   set_fact:

@@ -14,7 +14,7 @@ start_service() {
 	/usr/local/bin/ss-nat -s '{{ server }}' -l 1082 -o -I '{{ lan_interface }}' -i '{{ routing_rules_directory }}/{{ china_ip_list_filename }}'
 	ipset restore -! -f '{{ routing_rules_directory }}/ss_spec.ipset'
 	iptables -t nat -I PREROUTING -p tcp -m set --match-set ss_spec_lan_bypass src -j RETURN
-	cat '{{ routing_rules_directory }}/{{ doh_servers_list }}' '{{ routing_rules_directory }}/{{ directly_connecting_domain_list }}' | xargs -n 1 ping -4 -q -c 1 -s 0 -W 1 -w 1 | grep PING | sed -n 's/[^(]*(\([^)]*\)).*/add ss_spec_wan_ac \1/p' | ipset restore -! &
+	cat '{{ routing_rules_directory }}/{{ doh_servers_file }}' '{{ routing_rules_directory }}/{{ directly_connecting_domains_file }}' | xargs -n 1 ping -4 -q -c 1 -s 0 -W 1 -w 1 | grep PING | sed -n 's/[^(]*(\([^)]*\)).*/add ss_spec_wan_ac \1/p' | ipset restore -! &
 	procd_open_instance
 	procd_set_param command $PROG -config $CONF
 	procd_set_param stdout 1

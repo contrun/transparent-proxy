@@ -10,24 +10,28 @@ cache-size=10000
 dns-forward-max=1000
 
 all-servers
-{% if enable_service == 'yes' %}
-# https dns proxy servers
-{% for s in doh_servers + [server] %}
-server=127.0.0.1#{{ 10053 - loop.index }}
-{% endfor %}
-# v2ray dokodemo-door dns servers
-{% for s in v2ray_upstream_dns_servers %}
-server=127.0.0.1#{{ 10052 + loop.index }}
-{% endfor %}
-{% endif %}
+
 {% for domain in domains_to_be_resolved_with_china_dns_servers %}
 {% for dns_server in china_dns_servers %}
 server=/{{ domain }}/{{ dns_server }}
 {% endfor %}
 {% endfor %}
-{% if enable_service != 'yes' %}
-{% for dns_server in china_dns_servers %}
-server={{ dns_server }}
+
+# https dns proxy servers
+{% for s in doh_servers %}
+server=127.0.0.1#{{ 10052 - loop.index }}
 {% endfor %}
-{% endif %}
+
+# doh reverse proxy
+{% if program != 'v2ray' or enable_service != 'yes' %}# {% endif %}server=127.0.0.1#10052
+
+# v2ray dokodemo-door dns servers
+{% for s in v2ray_upstream_dns_servers %}
+{% if program != 'v2ray' or enable_service != 'yes' %}# {% endif %}server=127.0.0.1#{{ 10052 + loop.index }}
+{% endfor %}
+
+{% for dns_server in china_dns_servers %}
+{% if enable_service == 'yes' %}# {% endif %}server={{ dns_server }}
+{% endfor %}
+
 conf-dir=/etc/dnsmasq.d

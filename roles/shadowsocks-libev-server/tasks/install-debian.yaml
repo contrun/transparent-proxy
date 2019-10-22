@@ -1,0 +1,9 @@
+- name: Install packages with APT
+  apt:
+    name: "{{ ss_packages }}"
+    state: latest
+    install_recommends: no
+    policy_rc_d: 101 # Prevent services from starting immediately after installation
+  environment:
+    RUNLEVEL: 1
+  tags: [ "packages" ]

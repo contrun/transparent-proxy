@@ -22,9 +22,9 @@ Easier transparent non-Chinese server traffic redirection to v2ray server.
 
 ## Import ssh public key
 ```
-key-name=my_superb_public_key
+key_name=my_superb_public_key
 region=ap-northeast-1
-aws --region "$region" ec2 import-key-pair --key-name "$key-name" --public-key-material file://~/.ssh/id_rsa.pub
+aws --region "$region" ec2 import-key-pair --key-name "$key_name" --public-key-material file://~/.ssh/id_rsa.pub
 ```
 
 ## Create aws security group
@@ -38,7 +38,7 @@ aws --region "$region" ec2 authorize-security-group-ingress --group-name circumv
 ## Run ec2 instance
 ```
 # find a new ubuntu image here https://cloud-images.ubuntu.com/locator/ec2/
-aws --region "$region" ec2 run-instances --image-id ami-01213e6def4fd4853 --security-groups circumvent-gfw --key-name "$key-name"
+aws --region "$region" ec2 run-instances --image-id ami-01213e6def4fd4853 --security-groups circumvent-gfw --key-name "$key_name"
 ```
 
 ## Get instance ip

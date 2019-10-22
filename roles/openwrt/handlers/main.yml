@@ -4,11 +4,23 @@
     name: v2ray-redir
     enabled: yes
     state: restarted
-  when: enable_service == 'yes'
+  when: (enable_service == 'yes') and (program == 'v2ray')
+
+- name: restart shadowsocks-libev-redir
+  service:
+    name: shadowsocks-libev-redir
+    enabled: yes
+    state: restarted
+  when: (enable_service == 'yes') and (program == 'shadowsocks-libev')
 
 - name: stop v2ray-redir
   service:
     name: v2ray-redir
+    state: stopped
+
+- name: stop shadowsocks-libev-redir
+  service:
+    name: shadowsocks-libev-redir
     state: stopped
 
 - name: restart dnsmasq

@@ -1,0 +1,11 @@
+{
+  "server": {{ ss_server_address | to_json }},
+  "server_port": {{ ss_server_port | to_json }},
+  "password": {{ ss_server_password | to_json }},
+  "timeout": {{ ss_server_timeout | to_json }},
+  "method": {{ ss_server_method | to_json }},
+  "fast_open": {{ ss_server_fast_open | to_json }},
+  "ipv6_first": {{ ss_server_ipv6_first | to_json }},
+  "no_delay": {{ ss_server_no_delay | to_json }},
+  "reuse_port": {{ ss_server_reuse_port | to_json }}
+}

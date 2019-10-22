@@ -1,0 +1,19 @@
+# configurations
+ss_server_instance: server # without `.json` suffix
+ss_server_address: ["::", "0.0.0.0"]
+ss_server_port: 8080
+ss_server_password: changeme!!!
+ss_server_method: chacha20-ietf-poly1305
+ss_server_mode: "tcp_and_udp"
+ss_server_timeout: 30
+ss_server_ipv6_first: false
+ss_server_no_delay: true
+ss_server_fast_open: true
+ss_server_reuse_port: false
+
+# paths
+ss_server_config_dir: /etc/shadowsocks-libev
+
+# packages
+ss_server_packages: shadowsocks-libev
+ss_artifacts_dir: /var/www/help/v2ray

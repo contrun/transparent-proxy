@@ -1,0 +1,11 @@
+{
+  "server": {{ ss_server | to_json }},
+  "server_port": {{ ss_server_port | to_json }},
+  "local_address": "0.0.0.0",
+  "local_port": 1082,
+  "password": {{ ss_server_password | to_json }},
+  "method": {{ ss_server_method | to_json }},
+  "mode": {{ ss_server_mode | to_json }},
+  "fast_open": {{ ss_server_fast_open | to_json }},
+  "no_delay": {{ ss_server_no_delay | to_json }}
+}

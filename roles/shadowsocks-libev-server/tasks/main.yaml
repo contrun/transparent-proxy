@@ -1,0 +1,44 @@
+- name: Perform OS specific installation with package manager
+  include_tasks: "{{ item }}"
+  with_first_found:
+  - files:
+    - "install-{{ ansible_distribution|lower }}.yaml"
+    - "install-{{ ansible_os_family|lower }}.yaml"
+  tags: [ "packages" ]
+
+- name: Save list of shadowsocks-libev server
+  set_fact:
+    servers:
+      - "{{ inventory_hostname }}"
+
+- name: Save list of shadowsocks-libev server
+  set_fact:
+    servers: "{{ (servers + [cloudflare_domain]) | unique }}"
+  when: cloudflare_domain is defined
+
+- name: Generate ss-server config file {{ss_server_config_dir}}/{{ss_server_instance}}.json
+  template:
+    dest: "{{ss_server_config_dir}}/{{ss_server_instance}}.json"
+    src: server.json.j2
+  notify: Restart shadowsocks-libev-server@
+
+- name: Enable and start ss-server service
+  systemd:
+    name: "shadowsocks-libev-server@{{ ss_server_instance }}"
+    enabled: True
+    state: started
+
+- name: Render shadowsocks-libev client config file
+  template:
+    src: "client.json.j2"
+    dest: "{{ ss_artifacts_dir }}/shadowsocks-libev-{{ ss_server }}-config.json"
+  loop: "{{ servers }}"
+  loop_control:
+    loop_var: ss_server
+
+- name: Fetch shadowsocks-libev client config file
+  fetch:
+    src: "{{ ss_artifacts_dir }}/shadowsocks-libev-{{ item }}-config.json"
+    dest: "artifacts/shadowsocks-libev-{{ item }}-config.json"
+    flat: yes
+  with_items: "{{ servers }}"

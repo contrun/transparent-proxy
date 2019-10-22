@@ -1,6 +1,7 @@
 - hosts: "{{ host }}"
   remote_user: "{{ user }}"
   become: "{{ become | default('yes') }}"
+  gather_facts: "{{ gather_facts | default('yes') }}"
   vars_files:
     - "vars/main.yml"
     - [ "vars/main.local.yml" ]

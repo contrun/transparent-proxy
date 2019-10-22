@@ -1,0 +1,46 @@
+- name: Make sure EPEL repo is enabled on RHEL/CentOS
+  when: ansible_facts['distribution'] in ["CentOS", "RedHat"]
+  tags: [ "repos" ]
+  block:
+    - name: Check if EPEL repo installed
+      stat:
+        path: /etc/yum.repos.d/epel.repo
+      register: epelrepo
+    - name: Install EPEL repo
+      when: not epelrepo.stat.exists
+      yum:
+        name: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm"
+    - name: Enable EPEL repo
+      ini_file:
+        path: /etc/yum.repos.d/epel.repo
+        create: no
+        no_extra_spaces: yes
+        section: epel
+        option: enabled
+        value: 1
+
+- name: Enable Fedora Copr repo for shadowsocks owned by rayson (RHEL/CentOS 7)
+  shell: |
+    yum install -y yum-plugin-copr
+    yum copr enable -y rayson/shadowsocks
+  args:
+    creates: /etc/yum.repos.d/_copr_rayson-shadowsocks.repo
+  when: (ansible_facts['distribution'] in ["CentOS", "RedHat"] and ansible_facts['distribution_major_version'] | int < 8)
+  tags: [ "repos" ]
+
+- name: Enable Fedora Copr repo for shadowsocks owned by rayson (Fedora, RHEL/CentOS 8)
+  shell: |
+    dnf install -y 'dnf-command(copr)'
+    dnf copr enable -y rayson/shadowsocks
+  args:
+    creates: /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:rayson:shadowsocks.repo
+  when: (ansible_facts['distribution'] == 'Fedora' ) or
+    (ansible_facts['distribution'] in ["CentOS", "RedHat"] and ansible_facts['distribution_major_version'] | int >= 8)
+  tags: [ "repos" ]
+
+- name: Install packages with YUM
+  yum:
+    name: "{{ ss_packages }}"
+    state: latest
+    install_weak_deps: no
+  tags: [ "packages" ]
