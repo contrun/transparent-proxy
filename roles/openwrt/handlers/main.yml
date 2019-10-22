@@ -3,13 +3,19 @@
   service:
     name: v2ray-redir
     enabled: yes
-    state: reloaded
+    state: restarted
+  when: enable_service == 'yes'
 
-- name: reload dnsmasq
+- name: stop v2ray-redir
+  service:
+    name: v2ray-redir
+    state: stopped
+
+- name: restart dnsmasq
   service:
     name: dnsmasq
     enabled: yes
-    state: reloaded
+    state: restarted
 
 - name: reload https_dns_proxy
   service:
