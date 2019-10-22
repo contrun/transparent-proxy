@@ -155,22 +155,11 @@
     uci set https_dns_proxy.dns{{ index }}.listen_port="{{ 10052 - index}}"
     uci set https_dns_proxy.dns{{ index }}.user="nobody"
     uci set https_dns_proxy.dns{{ index }}.group="nogroup"
-    uci set https_dns_proxy.dns{{ index }}.url_prefix="{{ item }}"
-  loop: "{{ ([server + '/resolve?'] + (doh_servers | map('regex_replace', '$', '/dns-query?') | list)) | map('regex_replace', '^', 'https://') | list }}"
+    uci set https_dns_proxy.dns{{ index }}.url_prefix="{{ upstream_server }}"
+  loop: "{{ ['https://' + server + '/resolve?'] + (doh_servers | map('regex_replace', '$', '/dns-query?') | map('regex_replace', '^', 'https://') | list) + doh_servers_using_proxy }}"
   loop_control:
     index_var: index
-
-- name: Change https_dns_proxy config for possibly blocked doh server
-  shell: |
-    uci set https_dns_proxy.dns{{ index }}="https_dns_proxy"
-    uci set https_dns_proxy.dns{{ index }}.listen_addr="127.0.0.1"
-    uci set https_dns_proxy.dns{{ index }}.listen_port="{{ 10052 - index - doh_servers_using_proxy|length }}"
-    uci set https_dns_proxy.dns{{ index }}.user="nobody"
-    uci set https_dns_proxy.dns{{ index }}.group="nogroup"
-    uci set https_dns_proxy.dns{{ index }}.url_prefix="{{ item }}"
-  loop: "{{ doh_servers_using_proxy }}"
-  loop_control:
-    index_var: index
+    loop_var: upstream_server
 
 - name: Commit https_dns_proxy config changes
   shell: |
