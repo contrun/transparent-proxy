@@ -22,6 +22,11 @@ server=/{{ domain }}/{{ dns_server }}
 server=127.0.0.1#{{ 10052 - loop.index }}
 {% endfor %}
 
+# https dns proxy servers (possibly unreachable)
+{% for s in doh_servers_using_proxy %}
+server=127.0.0.1#{{ 10052 - doh_servers|length - loop.index }}
+{% endfor %}
+
 # doh reverse proxy
 {% if program != 'v2ray' or enable_service != 'yes' %}# {% endif %}server=127.0.0.1#10052
 

@@ -11,6 +11,10 @@ doh_servers:
   - "doh-de.blahdns.com"
   - "doh.netweaver.uk"
   - "doh.li"
+doh_servers_using_proxy:
+  - "https://dns.google.com/resolve?"
+  - "https://dns.containerpi.com/dns-query?"
+  - "https://doh-2.seby.io/dns-query?"
 v2ray_upstream_dns_servers:
   - "8.8.8.8"
   - "1.1.1.1"
