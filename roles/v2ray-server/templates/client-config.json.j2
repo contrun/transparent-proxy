@@ -6,6 +6,7 @@
 {% for dns_server in v2ray_upstream_dns_servers %}
     {
       "port": {{ 10052 + loop.index }},
+      "listen": "0.0.0.0",
       "protocol": "dokodemo-door",
       "settings": {
         "address": "{{ dns_server }}",
@@ -30,6 +31,7 @@
     },
     {
       "port": 8880,
+      "listen": "0.0.0.0",
       "protocol": "http",
       "settings": {}
     }

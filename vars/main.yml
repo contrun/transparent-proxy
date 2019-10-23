@@ -4,7 +4,6 @@ user: ubuntu
 doh_server_in_china:
   - "dns.rubyfish.cn"
 doh_servers:
-  - "dns.rubyfish.cn"
   - "doh.securedns.eu"
   - "doh.dns.sb"
   - "dns.aaflalo.me"

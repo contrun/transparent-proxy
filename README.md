@@ -116,3 +116,4 @@ This project is built on top of following projects.
 
 # Related projects
 - [kexue-gateway](https://github.com/wi1dcard/kexue-gateway/)
+- [v2ray-redir](https://github.com/KireinaHoro/v2ray-redir)

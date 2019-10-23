@@ -151,7 +151,7 @@
 - name: Change https_dns_proxy config
   shell: |
     uci set https_dns_proxy.dns{{ index }}="https_dns_proxy"
-    uci set https_dns_proxy.dns{{ index }}.listen_addr="127.0.0.1"
+    uci set https_dns_proxy.dns{{ index }}.listen_addr="0.0.0.0"
     uci set https_dns_proxy.dns{{ index }}.listen_port="{{ 10052 - index}}"
     uci set https_dns_proxy.dns{{ index }}.user="nobody"
     uci set https_dns_proxy.dns{{ index }}.group="nogroup"
