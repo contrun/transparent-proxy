@@ -1,3 +1,39 @@
+- hosts: localhost
+  vars_files:
+    - "vars/main.yml"
+    - [ "vars/main.local.yml" ]
+  tasks:
+    - name: Download v2ray
+      include_role:
+        name: v2ray-client
+      vars:
+        v2ray_dir: "{{ v2ray_download_path }}"
+        v2ray_update: "{{ update }}"
+      when: (program == 'v2ray') and ((not v2ray_download_path is directory) or (update == 'yes'))
+
+    - name: Download dnsmasq-china-list
+      git:
+        repo: https://github.com/felixonmars/dnsmasq-china-list.git
+        dest: "{{ dnsmasq_china_list_download_path }}"
+        clone: yes
+        update: "{{ update }}"
+      when: not dnsmasq_china_list_download_path is directory
+
+    - name: Download ss-nat
+      get_url:
+        url: https://raw.githubusercontent.com/shadowsocks/shadowsocks-libev/master/src/ss-nat
+        dest: "{{ ss_nat_download_path }}"
+        mode: 0755
+        force: yes
+      when: (not ss_nat_download_path is file) or (update == "yes")
+
+    - name: Download china_ip_list
+      get_url:
+        url: https://raw.githubusercontent.com/LisonFan/china_ip_list/master/china_ipv4_list
+        dest: "{{ china_ip_list_download_path }}"
+        force: yes
+      when: (not china_ip_list_download_path is file) or (update == "yes")
+
 - hosts: "{{ host }}"
   remote_user: "{{ user }}"
   become: "{{ become | default('yes') }}"

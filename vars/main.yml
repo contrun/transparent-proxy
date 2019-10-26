@@ -35,7 +35,6 @@ bypass_lan_ip_list: []
 bypass_wan_ip_list: []
 directly_connecting_domain_list: []
 letsencrypt_email: name@example.com
-v2ray_uuids: []
 v2ray_uuids:
   - "4907676f-408d-45b6-9080-c8e57e497ce3"
   - "d32b93bd-878c-4f98-9f29-5f8bbb3cf4d9"
@@ -49,3 +48,9 @@ v2ray_uuids:
   - "a99a51cc-68f9-4e9a-aa5a-2a6242c4f536"
 enable_service: yes
 program: v2ray
+artifacts_dir: /var/www/help
+update: no
+v2ray_download_path: "{{ playbook_dir }}/artifacts/v2ray"
+ss_nat_download_path: "{{ playbook_dir }}/artifacts/ss-nat"
+dnsmasq_china_list_download_path: "{{ playbook_dir }}//artifacts/dnsmasq-china-list"
+china_ip_list_download_path: "{{ playbook_dir }}/artifacts/china_ipv4_list"
