@@ -50,7 +50,14 @@ enable_service: yes
 program: v2ray
 artifacts_dir: /var/www/help
 update: no
-v2ray_download_path: "{{ playbook_dir }}/artifacts/v2ray"
-ss_nat_download_path: "{{ playbook_dir }}/artifacts/ss-nat"
-dnsmasq_china_list_download_path: "{{ playbook_dir }}//artifacts/dnsmasq-china-list"
-china_ip_list_download_path: "{{ playbook_dir }}/artifacts/china_ipv4_list"
+local_prefix: "{{ playbook_dir }}/artifacts"
+doh_servers_name: "doh_servers"
+china_ip_list_name: "china_ipv4_list"
+directly_connecting_domains_name: "directly_connecting_domains"
+v2ray_name: "v2ray"
+ss_nat_name: "ss-nat"
+dnsmasq_china_list_original_name: "dnsmasq-china-list.git"
+dnsmasq_china_list_name: "dnsmasq-china-list"
+dnsmasq_conf_name: "dnsmasq.conf"
+resolv_conf_name: "resolv.conf"
+remote_prefix: "/opt/transparent-proxy"

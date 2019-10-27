@@ -1,0 +1,18 @@
+[Unit]
+Description=Clean DNS
+After=network.target
+Wants=network.target
+Conflicts=dnsmasq.service
+
+[Service]
+Type=simple
+LimitNOFILE=102400
+EnvironmentFile={{ remote_prefix }}/conf.d/default-env
+ExecStart={{ remote_prefix }}/clean-dns start
+ExecStartPre={{ remote_prefix }}/clean-dns pre_start
+ExecStartPost={{ remote_prefix }}/clean-dns post_start
+ExecStopPost={{ remote_prefix }}/clean-dns post_stop
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

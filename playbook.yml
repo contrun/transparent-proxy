@@ -1,38 +1,71 @@
 - hosts: localhost
+  become: no
+  gather_facts: no
   vars_files:
     - "vars/main.yml"
     - [ "vars/main.local.yml" ]
   tasks:
+    - name: Ensure directories exists
+      file:
+        path: "{{ item }}"
+        state: directory
+      loop:
+        - "{{ local_prefix}}/{{ dnsmasq_china_list_name }}"
+
     - name: Download v2ray
       include_role:
         name: v2ray-client
       vars:
-        v2ray_dir: "{{ v2ray_download_path }}"
+        v2ray_dir: "{{ item }}"
         v2ray_update: "{{ update }}"
-      when: (program == 'v2ray') and ((not v2ray_download_path is directory) or (update == 'yes'))
+      when: (program == 'v2ray') and ((not item is directory) or (update == 'yes'))
+      loop:
+        - "{{ local_prefix}}/{{ v2ray_name }}"
 
     - name: Download dnsmasq-china-list
       git:
         repo: https://github.com/felixonmars/dnsmasq-china-list.git
-        dest: "{{ dnsmasq_china_list_download_path }}"
+        dest: "{{ local_prefix}}/{{ dnsmasq_china_list_original_name }}"
         clone: yes
         update: "{{ update }}"
-      when: not dnsmasq_china_list_download_path is directory
+      when: not dnsmasq_china_list_original_name is directory
 
-    - name: Download ss-nat
+    - name: Fix dnsmasq-china-list
+      shell: |
+        SERVERS=( {{ '"' + china_dns_servers|join('" "') + '"' }} )
+        CONF_WITH_SERVERS=(accelerated-domains.china apple.china)
+        # CONF_WITH_SERVERS=(accelerated-domains.china google.china apple.china)
+        CONF_SIMPLE=(bogus-nxdomain.china)
+        for _conf in "${CONF_SIMPLE[@]}"; do
+            cp "{{ local_prefix}}/{{ dnsmasq_china_list_original_name }}/$_conf.conf" "{{ local_prefix}}/{{ dnsmasq_china_list_name }}/$_conf.conf"
+        done
+        for _server in "${SERVERS[@]}"; do
+            for _conf in "${CONF_WITH_SERVERS[@]}"; do
+                cp "{{ local_prefix}}/{{ dnsmasq_china_list_original_name }}/$_conf.conf" "{{ local_prefix}}/{{ dnsmasq_china_list_name }}/$_conf.$_server.conf"
+            done
+            sed -i "s|^\(server.*\)/[^/]*$|\1/$_server|" "{{ local_prefix}}/{{ dnsmasq_china_list_name }}"/*."$_server".conf
+        done
+
+    - name: Download files
       get_url:
-        url: https://raw.githubusercontent.com/shadowsocks/shadowsocks-libev/master/src/ss-nat
-        dest: "{{ ss_nat_download_path }}"
+        dest: "{{ item.path }}"
+        url: "{{ item.url }}"
         mode: 0755
         force: yes
-      when: (not ss_nat_download_path is file) or (update == "yes")
+      when: (not item.path is file) or (update == 'yes')
+      loop:
+        - path: "{{ local_prefix}}/{{ ss_nat_name }}"
+          url: https://raw.githubusercontent.com/shadowsocks/shadowsocks-libev/master/src/ss-nat
+        - path: "{{ local_prefix}}/{{ china_ip_list_name }}"
+          url: https://raw.githubusercontent.com/LisonFan/china_ip_list/master/china_ipv4_list
 
-    - name: Download china_ip_list
-      get_url:
-        url: https://raw.githubusercontent.com/LisonFan/china_ip_list/master/china_ipv4_list
-        dest: "{{ china_ip_list_download_path }}"
-        force: yes
-      when: (not china_ip_list_download_path is file) or (update == "yes")
+    - name: Render files
+      template:
+        src: "{{ item }}.j2"
+        dest: "{{ local_prefix }}/{{ item }}"
+      loop:
+        - "{{ doh_servers_name }}"
+        - "{{ directly_connecting_domains_name }}"
 
 - hosts: "{{ host }}"
   remote_user: "{{ user }}"

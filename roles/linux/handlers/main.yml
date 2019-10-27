@@ -1,0 +1,13 @@
+---
+# handlers file for linux
+- name: Restart transparent-proxy@
+  systemd:
+    name: "transparent-proxy@{{ transparent_proxy_instance }}"
+    daemon_reload: yes
+    state: restarted
+
+- name: Restart clean-dns
+  systemd:
+    name: "clean-dns"
+    daemon_reload: yes
+    state: restarted

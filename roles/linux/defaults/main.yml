@@ -1,0 +1,7 @@
+---
+# defaults file for linux
+systemd_unit_dest: /etc/systemd/system
+ss_nat_path: /opt/ss-nat/ss-nat
+v2ray_dir: /opt/v2ray
+remote_prefix: /opt/transparent-proxy
+default_instance: default

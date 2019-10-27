@@ -1,0 +1,31 @@
+#!/bin/sh
+
+set -xeuo pipefail
+
+start() {
+        dnsmasq -C '{{ remote_prefix }}/{{ dnsmasq_conf_name }}' -d
+}
+
+pre_start() {
+        :
+}
+
+post_start() {
+        if ! ls -lha /etc/resolv.conf | grep '{{ remote_prefix }}/{{ resolv_conf_name }}'; then
+                cp "/etc/resolv.conf" "{{ remote_prefix }}/resolv.conf.bak"
+        fi
+        ln -sf "{{ remote_prefix }}/{{ resolv_conf_name }}" "/etc/resolv.conf"
+}
+
+post_stop() {
+        cp "{{ remote_prefix }}/resolv.conf.bak" /etc/resolv.conf || true
+}
+
+quit() {
+        echo "$0 start"
+}
+
+export PATH="$PATH:/run/current-system/sw/bin"
+action="${1:-quit}"
+shift
+"$action" "$@"

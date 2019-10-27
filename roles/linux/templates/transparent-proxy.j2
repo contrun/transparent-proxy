@@ -1,0 +1,52 @@
+#!/bin/sh
+set -xe
+
+start() {
+        chmod +x "$program_path"
+        if [[ -z "$program" ]] || [[ -z "$config" ]]; then
+                echo 'You must specify the program to run with $program and $config'
+                exit 1
+        elif [[ "$program" == "v2ray" ]]; then
+                "$program_path" -config "$config"
+        elif [[ "$program" == "shadowsocks-libev" ]]; then
+                "$program_path" -c "$config"
+        else
+                echo 'Unrecognized $program:'"$program"
+                exit 1
+        fi
+
+}
+
+pre_start() {
+        :
+        # TODO: need a way to stop all other instances. Below does not work.
+        # systemctl stop 'transparent-proxy@*'
+}
+
+post_start() {
+        {
+                ipset create ss_spec_lan_bypass hash:net
+                if [[ -z "$lan_interface" ]]; then
+                        {{ remote_prefix }}/ss-nat -s "$server" -l 1082 -o -i "$china_ip_list_file"
+                else
+                        {{ remote_prefix }}/ss-nat -s "$server" -l 1082 -o -I "$lan_interface" -i "$china_ip_list_file"
+                fi
+                ipset restore -! -f "$routing_rules_directory/ss_spec.ipset"
+                iptables -t nat -I PREROUTING -p tcp -m set --match-set ss_spec_lan_bypass src -j RETURN
+                cat "$doh_servers_file" "$directly_connecting_domains_file" | xargs -n 1 ping -4 -q -c 1 -s 0 -W 1 -w 1 | grep PING | sed -n 's/[^(]*(\([^)]*\)).*/add ss_spec_wan_ac \1/p' | ipset restore -!
+        } || true
+}
+
+post_stop() {
+        iptables-save -c | grep -v "ss_spec_lan_bypass" | iptables-restore -c
+        {{ remote_prefix }}/ss-nat -f
+        ipset destroy ss_spec_lan_bypass || true
+}
+quit() {
+        echo "$0 start"
+}
+
+export PATH="$PATH:/run/current-system/sw/bin"
+action="${1:-quit}"
+shift
+"$action" "$@"

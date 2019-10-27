@@ -1,0 +1,146 @@
+---
+# tasks file for linux
+- name: Set facts
+  set_fact:
+    transparent_proxy_instance: "{{ program }}-{{ server }}"
+  when: transparent_proxy_instance is not defined
+
+- name: Set facts
+  set_fact:
+    config_file: "{{ transparent_proxy_instance }}-config.json"
+    dnsmasq_conf_dir: "{{ remote_prefix }}/{{ dnsmasq_china_list_name }}"
+
+- name: Ensure directories exists
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ ansible_real_user_id }}"
+    mode: 0755
+  loop:
+    - "{{ remote_prefix }}"
+    - "{{ remote_prefix }}/conf.d"
+    - "{{ systemd_unit_dest }}"
+
+- name: Create systemd unit
+  template:
+    src: "{{ unit }}@.service.j2"
+    dest: "{{ systemd_unit_dest }}/{{ unit }}@.service"
+    owner: root
+    group: root
+    mode: 0644
+  become: on
+  become_user: root
+  loop:
+    - transparent-proxy
+  loop_control:
+    loop_var: unit
+  notify: "Restart transparent-proxy@"
+
+- name: Create systemd unit
+  template:
+    src: "{{ unit }}.service.j2"
+    dest: "{{ systemd_unit_dest }}/{{ unit }}.service"
+    owner: root
+    group: root
+  become: on
+  become_user: root
+  loop:
+    - clean-dns
+  loop_control:
+    loop_var: unit
+  notify: "Restart clean-dns"
+
+- name: Create config files
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ remote_prefix }}/{{ item }}"
+  loop:
+    - "dnsmasq.conf"
+    - "resolv.conf"
+  notify: "Restart clean-dns"
+
+- name: Create clean-dns script
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ remote_prefix }}/{{ item }}"
+    mode: 0755
+  loop:
+    - "clean-dns"
+  notify: "Restart clean-dns"
+
+- name: Create transparent-proxy script
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ remote_prefix }}/{{ item }}"
+    mode: 0755
+  loop:
+    - "clean-dns"
+  notify: "Restart transparent-proxy@"
+
+- name: Copy v2ray to remote
+  copy:
+    src: "./artifacts/{{ item }}"
+    dest: "{{ remote_prefix }}"
+    force: "{{ update }}"
+    mode: preserve
+  loop:
+    - "{{ v2ray_name }}"
+  notify: "Restart transparent-proxy@"
+
+- name: Copy ss-nat to remote
+  copy:
+    src: "./artifacts/{{ item }}"
+    dest: "{{ remote_prefix }}/{{ item }}"
+    mode: 0755
+    force: "{{ update }}"
+  loop:
+    - "{{ ss_nat_name }}"
+  notify: "Restart transparent-proxy@"
+
+- name: Copy files to remote
+  copy:
+    src: "./artifacts/{{ item }}"
+    dest: "{{ remote_prefix }}/{{ item }}"
+    force: yes
+  loop:
+    - "{{ doh_servers_name }}"
+    - "{{ china_ip_list_name }}"
+    - "{{ directly_connecting_domains_name }}"
+    - "{{ dnsmasq_china_list_name }}/"
+  notify: "Restart transparent-proxy@"
+
+- name: Copy dnsmasq_china_list to remote
+  copy:
+    src: "./artifacts/{{ item }}"
+    dest: "{{ remote_prefix }}/{{ item }}"
+    force: yes
+  loop:
+    - "{{ dnsmasq_china_list_name }}/"
+  notify: "Restart clean-dns"
+
+- name: Copy configurations to remote
+  copy:
+    src: "./artifacts/{{ item }}"
+    dest: "{{ remote_prefix }}/conf.d/{{ item }}"
+    force: yes
+  loop:
+    - "{{ config_file }}"
+  notify: "Restart transparent-proxy@"
+
+- name: Create env for remote
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ remote_prefix }}/conf.d/{{transparent_proxy_instance}}-{{ item }}"
+    force: yes
+  loop:
+    - env
+  notify: "Restart transparent-proxy@"
+
+- name: Create env for remote
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ remote_prefix }}/conf.d/default-{{ item }}"
+    force: yes
+  loop:
+    - env
+  notify: "Restart clean-dns"
