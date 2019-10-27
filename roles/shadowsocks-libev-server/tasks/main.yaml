@@ -28,6 +28,18 @@
     enabled: True
     state: started
 
+- name: Clean ss artifacts path
+  file:
+    state: absent
+    path: "{{ ss_artifacts_dir }}/"
+
+- name: Ensure ss artifacts directory exists
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - "{{ ss_artifacts_dir }}"
+
 - name: Render shadowsocks-libev client config file
   template:
     src: "client.json.j2"

@@ -16,4 +16,4 @@ ss_server_config_dir: /etc/shadowsocks-libev
 
 # packages
 ss_server_packages: shadowsocks-libev
-ss_artifacts_dir: /var/www/help/v2ray
+ss_artifacts_dir: /var/www/help/shadowsocks-libev

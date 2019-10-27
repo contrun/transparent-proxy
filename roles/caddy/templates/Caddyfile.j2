@@ -8,7 +8,7 @@ http://{{ inventory_hostname }} {
 https://{{ inventory_hostname }}/help {
   log {{ caddy_log_dir }}/{{ caddy_log_file }}
   tls {{ letsencrypt_email }}
-  root /var/www/help
+  root {{ artifacts_dir }}
   basicauth / {{ caddy_basicauth_username }} {{ caddy_basicauth_password }} {
 {% if caddy_basicauth_realm is defined and caddy_basicauth_realm|length > 0 %}
     realm "{{ caddy_basicauth_realm }}"
@@ -42,7 +42,7 @@ http://{{ cloudflare_domain }} {
 https://{{ cloudflare_domain }}/help {
   log {{ caddy_log_dir }}/{{ caddy_log_file }}
   tls {{ letsencrypt_email }}
-  root /var/www/help
+  root {{ artifacts_dir }}
   basicauth / {{ caddy_basicauth_username }} {{ caddy_basicauth_password }} {
 {% if caddy_basicauth_realm is defined and caddy_basicauth_realm|length > 0 %}
     realm "{{ caddy_basicauth_realm }}"

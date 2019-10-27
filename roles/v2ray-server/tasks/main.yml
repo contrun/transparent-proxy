@@ -3,11 +3,6 @@
     that:
       - v2ray_uuids is defined and (v2ray_uuids|length>0)
 
-- name: Set v2ray artifacts directory
-  set_fact:
-    v2ray_artifacts_dir: /var/www/help/v2ray
-  when: v2ray_artifacts_dir is not defined
-
 - name: Check that the v2ray bin exists
   stat:
     path: "/usr/bin/v2ray/v2ray"
