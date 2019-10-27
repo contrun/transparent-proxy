@@ -1,0 +1,47 @@
+log-queries=extra
+log-dhcp
+
+port=53
+no-resolv
+no-hosts
+no-negcache
+interface=*
+cache-size=10000
+dns-forward-max=1000
+
+all-servers
+
+{% for domain in domains_to_be_resolved_with_china_dns_servers %}
+{% for dns_server in china_dns_servers %}
+server=/{{ domain }}/{{ dns_server }}
+{% endfor %}
+{% endfor %}
+
+# https dns proxy servers
+{% for s in doh_servers %}
+server=127.0.0.1#{{ 10052 - loop.index }}
+{% endfor %}
+
+# https dns proxy servers (possibly unreachable)
+{% for s in doh_servers_using_proxy %}
+server=127.0.0.1#{{ 10052 - doh_servers|length - loop.index }}
+{% endfor %}
+
+# doh reverse proxy
+{% if program != 'v2ray' or enable_service != 'yes' %}# {% endif %}server=127.0.0.1#10052
+
+# v2ray dokodemo-door dns servers
+{% for s in v2ray_upstream_dns_servers %}
+{% if program != 'v2ray' or enable_service != 'yes' %}# {% endif %}server=127.0.0.1#{{ 10052 + loop.index }}
+{% endfor %}
+
+# dirty chinese dns servers
+{% for dns_server in china_dns_servers %}
+{% if enable_service == 'yes' %}# {% endif %}server={{ dns_server }}
+{% endfor %}
+
+{% if dnsmasq_conf_dir is defined %}
+conf-dir={{ dnsmasq_conf_dir }}
+{% else %}
+conf-dir=/etc/dnsmasq.d
+{% endif %}
