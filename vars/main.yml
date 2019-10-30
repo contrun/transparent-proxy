@@ -1,5 +1,5 @@
 host: v2ray
-user: ubuntu
+# user: ubuntu
 # See https://github.com/curl/curl/wiki/DNS-over-HTTPS
 doh_server_in_china:
   - "dns.rubyfish.cn"
@@ -50,6 +50,7 @@ enable_service: yes
 program: v2ray
 artifacts_dir: /var/www/help
 update: no
+local_update: no
 local_prefix: "{{ playbook_dir }}/artifacts"
 doh_servers_name: "doh_servers"
 china_ip_list_name: "china_ipv4_list"

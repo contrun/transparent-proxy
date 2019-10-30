@@ -2,7 +2,7 @@ http://{{ inventory_hostname }} {
   log {{ caddy_log_dir }}/{{ caddy_log_file }}
   proxy /v2ray localhost:8964 {
     websocket
-    transparent
+    header_upstream -Origin
   }
 }
 https://{{ inventory_hostname }}/help {
@@ -20,7 +20,7 @@ https://{{ inventory_hostname }} {
   tls {{ letsencrypt_email }}
   proxy /v2ray localhost:8964 {
     websocket
-    transparent
+    header_upstream -Origin
   }
   proxy /dns-query {{ doh_servers | map('quote') | join(' ') }} {
     policy first
@@ -36,7 +36,7 @@ http://{{ cloudflare_domain }} {
   log {{ caddy_log_dir }}/{{ caddy_log_file }}
   proxy /v2ray localhost:8964 {
     websocket
-    transparent
+    header_upstream -Origin
   }
 }
 https://{{ cloudflare_domain }}/help {
@@ -54,7 +54,7 @@ https://{{ cloudflare_domain }} {
   tls {{ letsencrypt_email }}
   proxy /v2ray localhost:8964 {
     websocket
-    transparent
+    header_upstream -Origin
   }
   proxy /dns-query {{ doh_servers | map('quote') | join(' ') }} {
     policy first

@@ -1,4 +1,10 @@
 ---
+- name: Set the name of all programs
+  set_fact:
+    all_programs:
+    - v2ray
+    - shadowsocks-libev
+
 - name: Set opkg packages to install
   set_fact:
     opkg_packages:
@@ -48,6 +54,8 @@
     - /opt/tmp
     - /etc/crontabs
     - "{{ routing_rules_directory }}"
+  async: 60
+  poll: 0
 
 - name: Check v2ray exists
   stat:
@@ -89,22 +97,24 @@
 
 - name: Stop services if not enable_service
   service:
-    name: "{{ item }}"
+    name: "{{ item }}-redir"
     state: stopped
-  with_items:
-    - v2ray-redir
-    - shadowsocks-libev-redir
+  loop: "{{ all_programs }}"
   when: enable_service != 'yes'
+
+- name: Stop other services
+  service:
+    name: "{{ item }}-redir"
+    state: stopped
+  loop: "{{ all_programs | difference([program]) }}"
+  notify: "restart {{ program }}-redir"
 
 - name: Copy config to /opt
   copy:
     src: "./artifacts/{{ item }}-{{ server }}-config.json"
     dest: "/opt//opt/conf.d/{{ item }}/"
     force: yes
-  when: "program == '{{ item }}'"
-  with_items:
-    - v2ray
-    - shadowsocks-libev
+  loop: "{{ all_programs | intersect([program]) }}"
 
 - name: Copy config to /etc
   copy:
@@ -112,10 +122,7 @@
     dest: "/etc/{{ item }}/config.json"
     force: yes
   notify: "restart {{ item }}-redir"
-  when: "program == '{{ item }}'"
-  with_items:
-    - v2ray
-    - shadowsocks-libev
+  loop: "{{ all_programs | intersect([program]) }}"
 
 - name: Copy china ip list
   copy:

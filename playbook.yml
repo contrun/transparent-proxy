@@ -17,8 +17,8 @@
         name: v2ray-client
       vars:
         v2ray_dir: "{{ item }}"
-        v2ray_update: "{{ update }}"
-      when: (program == 'v2ray') and ((not item is directory) or (update == 'yes'))
+        v2ray_local_update: "{{ local_update }}"
+      when: (program == 'v2ray') and ((not item is directory) or (local_update == 'yes'))
       loop:
         - "{{ local_prefix}}/{{ v2ray_name }}"
 
@@ -27,7 +27,7 @@
         repo: https://github.com/felixonmars/dnsmasq-china-list.git
         dest: "{{ local_prefix}}/{{ dnsmasq_china_list_original_name }}"
         clone: yes
-        update: "{{ update }}"
+        update: "{{ local_update }}"
       when: not dnsmasq_china_list_original_name is directory
 
     - name: Fix dnsmasq-china-list
@@ -52,7 +52,7 @@
         url: "{{ item.url }}"
         mode: 0755
         force: yes
-      when: (not item.path is file) or (update == 'yes')
+      when: (not item.path is file) or (local_update == 'yes')
       loop:
         - path: "{{ local_prefix}}/{{ ss_nat_name }}"
           url: https://raw.githubusercontent.com/shadowsocks/shadowsocks-libev/master/src/ss-nat
@@ -68,7 +68,7 @@
         - "{{ directly_connecting_domains_name }}"
 
 - hosts: "{{ host }}"
-  remote_user: "{{ user }}"
+  remote_user: "{{ user | default('ubuntu') }}"
   become: "{{ become | default('yes') }}"
   gather_facts: "{{ gather_facts | default('yes') }}"
   vars_files:

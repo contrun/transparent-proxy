@@ -53,6 +53,10 @@
         "security": "tls",
         "wsSettings": {
           "path": "/v2ray"
+        },
+        "tlsSettings":{
+          "serverName": "{{ v2ray_server }}",
+          "allowInsecure": false
         }
       }
     }
