@@ -38,6 +38,20 @@
 
 - name: Create systemd unit
   template:
+    src: "{{ unit }}@.service.j2"
+    dest: "{{ systemd_unit_dest }}/{{ unit }}@.service"
+    owner: root
+    group: root
+    mode: 0644
+  become: on
+  become_user: root
+  loop:
+    - my-proxy
+  loop_control:
+    loop_var: unit
+
+- name: Create systemd unit
+  template:
     src: "{{ unit }}.service.j2"
     dest: "{{ systemd_unit_dest }}/{{ unit }}.service"
     owner: root
@@ -56,6 +70,14 @@
     dest: "{{ remote_prefix }}/{{ item }}"
   loop:
     - "dnsmasq.conf"
+  notify: "Restart clean-dns"
+
+- name: Create config files
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ remote_prefix }}/{{ item }}"
+    mode: 0444
+  loop:
     - "resolv.conf"
   notify: "Restart clean-dns"
 

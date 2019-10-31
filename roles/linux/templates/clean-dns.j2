@@ -12,9 +12,12 @@ pre_start() {
 
 post_start() {
         if ! ls -lha /etc/resolv.conf | grep '{{ remote_prefix }}/{{ resolv_conf_name }}'; then
-                cp "/etc/resolv.conf" "{{ remote_prefix }}/resolv.conf.bak"
+
+                if diff "/etc/resolv.conf" "{{ remote_prefix }}/{{ resolv_conf_name }}" || ! [ -f "{{ remote_prefix }}/resolv.conf.bak" ]; then
+                        cp "/etc/resolv.conf" "{{ remote_prefix }}/resolv.conf.bak"
+                fi
         fi
-        ln -sf "{{ remote_prefix }}/{{ resolv_conf_name }}" "/etc/resolv.conf"
+        ln -sf "{{ remote_prefix }}/{{ resolv_conf_name }}" "/etc/resolv.conf" || rm /etc/resolv.conf
 }
 
 post_stop() {
