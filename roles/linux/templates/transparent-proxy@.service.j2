@@ -2,7 +2,7 @@
 Description=Transparent Proxy with v2ray or shadowsocks
 After=network.target
 Wants=network.target
-Wants=clean-dns.service
+Requires=clean-dns.service
 After=clean-dns.service
 
 [Service]

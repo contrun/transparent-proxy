@@ -11,6 +11,7 @@ Easier transparent non-Chinese server traffic redirection to v2ray, shadowsocks 
 - cache dns queries with dnsmasq
 - connect ip addresses in [china_ip_list](https://github.com/LisonFan/china_ip_list) directly
 - generate scripts to manage traffic redirection on openwrt
+- set up transparent proxy on linux machine
 
 ## Ansible roles
 - v2ray-server, installing v2ray in a vps
@@ -19,6 +20,7 @@ Easier transparent non-Chinese server traffic redirection to v2ray, shadowsocks 
 - caddy, front-end http server, used as reverse proxy to v2ray server
 - traefik, deprecated reverse proxy
 - openwrt, setting up transparent proxy on openwrt
+- linux, setting up transparent proxy on linux
 
 # Example usage with aws ec2
 
@@ -100,6 +102,11 @@ ansible-playbook playbook.yml -i inventory -e role=shadowsocks-libev-server -e h
 ## Set up openwrt
 ```
 ansible-playbook playbook.yml -i inventory -e role=openwrt -e host=myRouter -e server=v2ray.example.com -e program=shadowsocks-libev
+```
+
+## Set up linux
+```
+ansible-playbook playbook.yml -i inventory -e role=linux -e host=localhost -e server=v2ray.example.com -e program=v2ray
 ```
 
 Voilà!
