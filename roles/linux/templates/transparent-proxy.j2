@@ -18,9 +18,7 @@ start() {
 }
 
 pre_start() {
-        :
-        # TODO: need a way to stop all other instances. Below does not work.
-        # systemctl stop 'transparent-proxy@*'
+        systemctl list-units --state=running | grep '^transparent-proxy@' | grep -v "^transparent-proxy@${instance}" | awk '{print $1}' | xargs -n 1 -r systemctl stop
 }
 
 post_start() {

@@ -72,6 +72,13 @@
     - "dnsmasq.conf"
   notify: "Restart clean-dns"
 
+- name: Chattr of resolv.conf
+  shell: |
+    chattr -i '{{ remote_prefix }}/{{ item }}'
+  loop:
+    - "resolv.conf"
+  ignore_errors: True
+
 - name: Create config files
   template:
     src: "{{ item }}.j2"
@@ -80,6 +87,13 @@
   loop:
     - "resolv.conf"
   notify: "Restart clean-dns"
+
+- name: Chattr of resolv.conf
+  shell: |
+    chattr +i '{{ remote_prefix }}/{{ item }}'
+  loop:
+    - "resolv.conf"
+  ignore_errors: True
 
 - name: Create clean-dns script
   template:
@@ -96,7 +110,7 @@
     dest: "{{ remote_prefix }}/{{ item }}"
     mode: 0755
   loop:
-    - "clean-dns"
+    - "transparent-proxy"
   notify: "Restart transparent-proxy@"
 
 - name: Copy v2ray to remote

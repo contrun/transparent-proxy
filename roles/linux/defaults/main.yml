@@ -5,3 +5,4 @@ ss_nat_path: /opt/ss-nat/ss-nat
 v2ray_dir: /opt/v2ray
 remote_prefix: /opt/transparent-proxy
 default_instance: default
+dns_server_address: 127.53.0.1
