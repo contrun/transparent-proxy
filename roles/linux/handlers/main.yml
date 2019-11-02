@@ -5,9 +5,11 @@
     name: "transparent-proxy@{{ transparent_proxy_instance }}"
     daemon_reload: yes
     state: restarted
+  when: enable_service == 'yes'
 
 - name: Restart clean-dns
   systemd:
     name: "clean-dns"
     daemon_reload: yes
     state: restarted
+  when: enable_service == 'yes'
