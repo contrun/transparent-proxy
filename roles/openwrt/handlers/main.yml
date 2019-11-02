@@ -13,6 +13,12 @@
     state: restarted
   when: (enable_service == 'yes') and (program == 'shadowsocks-libev')
 
+- name: start cron
+  service:
+    name: cron
+    enabled: yes
+    state: started
+
 - name: stop v2ray-redir
   service:
     name: v2ray-redir
@@ -23,14 +29,23 @@
     name: shadowsocks-libev-redir
     state: stopped
 
-- name: restart dnsmasq
+- name: restart dnsmasq service
   service:
     name: dnsmasq
     enabled: yes
     state: restarted
+  listen: restart dnsmasq
 
 - name: reload https_dns_proxy
   service:
     name: https_dns_proxy
     enabled: yes
     state: reloaded
+
+- name: change resolv.conf
+  lineinfile:
+    path: /etc/resolv.conf
+    insertbefore: BOF
+    regexp: '^nameserver=127.0.0.1'
+    line: 'nameserver=127.0.0.1'
+  listen: restart dnsmasq

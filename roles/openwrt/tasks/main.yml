@@ -5,6 +5,11 @@
     - v2ray
     - shadowsocks-libev
 
+- name: Sanity check
+  assert:
+    that:
+      - enable_service != 'yes' or (program in all_programs and server is defined)
+
 - name: Set opkg packages to install
   set_fact:
     opkg_packages:
@@ -57,73 +62,6 @@
   async: 60
   poll: 0
 
-- name: Check v2ray exists
-  stat:
-    path: "/tmp/v2ray-installer.sh"
-  register: v2ray_stat_result
-  when: program == 'v2ray'
-
-- name: Check ss-nat exists
-  stat:
-    path: "/tmp/v2ray/v2ray.zip"
-  register: ssnat_stat_result
-
-- name: Download v2ray
-  include_role:
-    name: v2ray-client
-  vars:
-    v2ray_dir: /opt/v2ray
-    v2ray_update: "{{ update }}"
-  when: (program == 'v2ray') and ((v2ray_stat_result.stat.exists == False) or (update == "yes"))
-
-- name: Download ss-nat
-  get_url:
-    url: https://raw.githubusercontent.com/shadowsocks/shadowsocks-libev/master/src/ss-nat
-    dest: /usr/local/bin
-    mode: 0755
-    force: yes
-  when: (ssnat_stat_result.stat.exists == False) or (update == "yes")
-
-- name: Create items in init.d
-  template:
-    src: "{{ item }}.j2"
-    dest: "/etc/init.d/{{ item }}"
-    owner: root
-    group: root
-    mode: 0755
-  with_items:
-    - v2ray-redir
-    - shadowsocks-libev-redir
-
-- name: Stop services if not enable_service
-  service:
-    name: "{{ item }}-redir"
-    state: stopped
-  loop: "{{ all_programs }}"
-  when: enable_service != 'yes'
-
-- name: Stop other services
-  service:
-    name: "{{ item }}-redir"
-    state: stopped
-  loop: "{{ all_programs | difference([program]) }}"
-  notify: "restart {{ program }}-redir"
-
-- name: Copy config to /opt
-  copy:
-    src: "./artifacts/{{ item }}-{{ server }}-config.json"
-    dest: "/opt//opt/conf.d/{{ item }}/"
-    force: yes
-  loop: "{{ all_programs | intersect([program]) }}"
-
-- name: Copy config to /etc
-  copy:
-    src: "./artifacts/{{ item }}-{{ server }}-config.json"
-    dest: "/etc/{{ item }}/config.json"
-    force: yes
-  notify: "restart {{ item }}-redir"
-  loop: "{{ all_programs | intersect([program]) }}"
-
 - name: Copy china ip list
   copy:
     src: "{{ china_ip_list_filename }}"
@@ -163,7 +101,7 @@
     uci set https_dns_proxy.dns{{ index }}.user="nobody"
     uci set https_dns_proxy.dns{{ index }}.group="nogroup"
     uci set https_dns_proxy.dns{{ index }}.url_prefix="{{ upstream_server }}"
-  loop: "{{ ['https://' + server + '/resolve?'] + (doh_servers | map('regex_replace', '$', '/dns-query?') | map('regex_replace', '^', 'https://') | list) + doh_servers_using_proxy }}"
+  loop: "{{ (['https://' + server|default('dns.google.com') + '/resolve?'] + (doh_servers | map('regex_replace', '$', '/dns-query?') | map('regex_replace', '^', 'https://') | list) + doh_servers_using_proxy) | unique }}"
   loop_control:
     index_var: index
     loop_var: upstream_server
@@ -180,7 +118,7 @@
 
 - name: Sanitize domains_to_be_resolved_with_china_dns_servers
   set_fact:
-    domains_to_be_resolved_with_china_dns_servers: "{{ (domains_to_be_resolved_with_china_dns_servers + [server] + doh_servers + directly_connecting_domain_list) | unique }}"
+    domains_to_be_resolved_with_china_dns_servers: "{{ (domains_to_be_resolved_with_china_dns_servers + [server|default('example.com')] + doh_servers + directly_connecting_domain_list) | unique }}"
 
 - name: Create dnsmasq china list
   shell: "bash <(curl -L -s https://raw.githubusercontent.com/felixonmars/dnsmasq-china-list/master/install.sh)"
@@ -193,19 +131,6 @@
     src: dnsmasq.conf.j2
     dest: /etc/dnsmasq.conf
   notify: restart dnsmasq
-
-- name: Change resolv.conf
-  lineinfile:
-    path: /etc/resolv.conf
-    insertbefore: BOF
-    regexp: '^nameserver=127.0.0.1'
-    line: 'nameserver=127.0.0.1'
-
-- name: Ensure cron started
-  service:
-    name: cron
-    enabled: yes
-    state: started
 
 - name: Copy update_dnsmasq_rules.sh
   template:
@@ -222,3 +147,77 @@
     minute: "11"
     hour: "5,2"
     job: /usr/local/bin/update_dnsmasq_rules.sh
+  notify: start cron
+
+- name: Stop services if not enable_service
+  shell: |
+    [ -x "/etc/init.d/{{ item }}-redir" ] && "/etc/init.d/{{ item }}-redir" stop
+  # For some unfathomable reason, the following does not work.
+  # service:
+  #   name: "{{ item }}-redir"
+  #   state: stopped
+  loop: "{{ all_programs }}"
+  when: enable_service != 'yes'
+
+- name: End play if not enable_service
+  meta: end_play
+  when: enable_service != 'yes'
+
+- name: Check v2ray exists
+  stat:
+    path: "/opt/v2ray/v2ray"
+  register: v2ray_stat_result
+  when: program == 'v2ray'
+
+- name: Check ss-nat exists
+  stat:
+    path: "/usr/local/bin/ss-nat"
+  register: ssnat_stat_result
+
+- name: Download v2ray
+  include_role:
+    name: v2ray-client
+  vars:
+    v2ray_dir: /opt/v2ray
+    v2ray_update: "{{ update }}"
+  when: (program == 'v2ray') and ((v2ray_stat_result.stat.exists == False) or (update == "yes"))
+
+- name: Download ss-nat
+  get_url:
+    url: https://raw.githubusercontent.com/shadowsocks/shadowsocks-libev/master/src/ss-nat
+    dest: /usr/local/bin
+    mode: 0755
+    force: yes
+  when: (ssnat_stat_result.stat.exists == False) or (update == "yes")
+
+- name: Create items in init.d
+  template:
+    src: "{{ item }}.j2"
+    dest: "/etc/init.d/{{ item }}"
+    owner: root
+    group: root
+    mode: 0755
+  with_items:
+    - v2ray-redir
+    - shadowsocks-libev-redir
+
+- name: Stop other services
+  shell: |
+    [ -x "/etc/init.d/{{ item }}-redir" ] && "/etc/init.d/{{ item }}-redir" stop
+  loop: "{{ all_programs | difference([program]) }}"
+  notify: "restart {{ program }}-redir"
+
+- name: Copy config to /opt
+  copy:
+    src: "./artifacts/{{ item }}-{{ server }}-config.json"
+    dest: "/opt//opt/conf.d/{{ item }}/"
+    force: yes
+  loop: "{{ all_programs | intersect([program]) }}"
+
+- name: Copy config to /etc
+  copy:
+    src: "./artifacts/{{ item }}-{{ server }}-config.json"
+    dest: "/etc/{{ item }}/config.json"
+    force: yes
+  notify: "restart {{ item }}-redir"
+  loop: "{{ all_programs | intersect([program]) }}"
