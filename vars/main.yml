@@ -3,6 +3,7 @@ host: v2ray
 # See https://github.com/curl/curl/wiki/DNS-over-HTTPS
 doh_server_in_china:
   - "dns.rubyfish.cn"
+number_of_doh_servers_to_use: 2
 doh_servers:
   - "doh.securedns.eu"
   - "doh.dns.sb"
@@ -10,20 +11,24 @@ doh_servers:
   - "doh-de.blahdns.com"
   - "doh.netweaver.uk"
   - "doh.li"
+number_of_doh_servers_using_proxy_to_use: 2
 doh_servers_using_proxy:
   - "https://dns.google.com/resolve?"
   - "https://dns.containerpi.com/dns-query?"
   - "https://doh-2.seby.io/dns-query?"
+number_of_v2ray_upstream_dns_servers_to_use: 2
 v2ray_upstream_dns_servers:
   - "8.8.8.8"
   - "1.1.1.1"
   - "9.9.9.9"
 # Seem to be alive
+number_of_global_dns_servers_to_use: 2
 global_dns_servers:
   - "203.80.96.10"
   - "74.82.42.42"
   - "168.126.63.1"
   - "1.0.0.1"
+number_of_china_dns_servers_to_use: 2
 china_dns_servers:
   - "202.141.162.123"
   - "180.76.76.76"

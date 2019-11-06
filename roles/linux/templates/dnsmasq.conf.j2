@@ -34,8 +34,13 @@ server=127.0.0.1#{{ 10052 - doh_servers|length - loop.index }}
 {% if program != 'v2ray' or enable_service != 'yes' %}# {% endif %}server=127.0.0.1#{{ port }}
 {% endfor %}
 
+# dirty chinese dns servers
 {% for dns_server in china_dns_servers %}
 {% if enable_service == 'yes' %}# {% endif %}server={{ dns_server }}
 {% endfor %}
 
+{% if dnsmasq_conf_dir is defined %}
+conf-dir={{ dnsmasq_conf_dir }}
+{% else %}
 conf-dir=/etc/dnsmasq.d
+{% endif %}

@@ -35,6 +35,25 @@
       - shadowsocks-libev-ss-tunnel
       - iptables-mod-conntrack-extra
 
+- name: Randomly select doh servers
+  set_fact:
+    doh_servers:
+      "{{ (doh_servers | shuffle)[:number_of_doh_servers_to_use] }}"
+    doh_servers_using_proxy:
+      "{{ (doh_servers_using_proxy | shuffle)[:number_of_doh_servers_using_proxy_to_use] }}"
+
+- name: Randomly select dns servers
+  set_fact:
+    global_dns_servers:
+      "{{ (global_dns_servers | shuffle)[:number_of_global_dns_servers_to_use] }}"
+    china_dns_servers:
+      "{{ (china_dns_servers | shuffle)[:number_of_china_dns_servers_to_use] }}"
+
+- name: Randomly select v2ray dokodemo door dns servers
+  set_fact:
+    v2ray_dns_dokodemo_door_ports:
+      "{{ (range(10053, 10053 + v2ray_upstream_dns_servers|length) | list | shuffle)[:number_of_v2ray_upstream_dns_servers_to_use] }}"
+
 - name: Update opkg packages
   shell: |
     opkg update
