@@ -40,7 +40,7 @@ server=127.0.0.1#{{ 10052 - doh_servers|length - loop.index }}
 {% endfor %}
 
 {% if dnsmasq_conf_dir is defined %}
-conf-dir={{ dnsmasq_conf_dir }}
+{% if enable_service != 'yes' %}# {% endif %}conf-dir={{ dnsmasq_conf_dir }}
 {% else %}
 conf-dir=/etc/dnsmasq.d
 {% endif %}
