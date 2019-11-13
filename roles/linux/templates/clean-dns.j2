@@ -3,7 +3,7 @@
 set -xeuo pipefail
 
 start() {
-        dnsmasq --no-resolv --bind-interfaces --listen-address '{{ dns_server_address }}' --conf-file='{{ remote_prefix }}/{{ dnsmasq_conf_name }}' --no-daemon
+        dnsmasq --no-resolv --bind-interfaces --interface=lo --listen-address '{{ dns_server_address }}' --conf-file='{{ remote_prefix }}/{{ dnsmasq_conf_name }}' --no-daemon
 }
 
 pre_start() {
@@ -20,7 +20,7 @@ post_start() {
 }
 
 post_stop() {
-        cp "{{ remote_prefix }}/resolv.conf.bak" /etc/resolv.conf || rm /etc/resolv.conf
+        { cp "{{ remote_prefix }}/resolv.conf.bak" /etc/resolv.conf || rm /etc/resolv.conf; } || true
 }
 
 quit() {
