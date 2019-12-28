@@ -32,7 +32,7 @@ post_start() {
                 fi
                 ipset restore -! -f "$routing_rules_directory/ss_spec.ipset"
                 iptables -t nat -I PREROUTING -p tcp -m set --match-set ss_spec_lan_bypass src -j RETURN
-                cat "$doh_servers_file" "$directly_connecting_domains_file" | xargs -n 1 ping -4 -q -c 1 -s 0 -W 1 -w 1 | grep PING | sed -n 's/[^(]*(\([^)]*\)).*/add ss_spec_wan_ac \1/p' | ipset restore -!
+                cat "$doh_servers_file" "$directly_connecting_domains_file" | xargs -n 1 ping -4 -q -c 1 -s 0 -W 1 -w 1 | grep PING | sed -n 's/[^(]*(\([^)]*\)).*/add ss_spec_wan_ac \1/p' | ipset restore -! &
         } || true
 }
 
