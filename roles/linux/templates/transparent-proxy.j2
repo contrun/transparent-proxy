@@ -23,6 +23,7 @@ pre_start() {
 
 post_start() {
         {
+                ipset create ss_spec_wan_ac hash:net
                 ipset create ss_spec_lan_bypass hash:net
                 if [[ -z "$lan_interface" ]]; then
                         {{ remote_prefix }}/ss-nat -s "$server" -l 1082 -o -i "$china_ip_list_file"

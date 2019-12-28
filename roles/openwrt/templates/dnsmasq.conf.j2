@@ -16,6 +16,11 @@ server=/{{ domain }}/{{ dns_server }}
 {% endfor %}
 {% endfor %}
 
+# domains to be directly connected
+{% for domain in directly_connecting_domain_list + doh_servers %}
+ipset=/{{ domain }}/ss_spec_wan_ac
+{% endfor %}
+
 # https dns proxy servers
 {% for s in doh_servers %}
 server=127.0.0.1#{{ 10052 - loop.index }}

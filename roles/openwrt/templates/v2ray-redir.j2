@@ -10,6 +10,7 @@ CONF=/etc/v2ray/config.json
 PROG=/opt/v2ray/v2ray
 
 start_service() {
+	ipset create ss_spec_wan_ac hash:net
 	ipset create ss_spec_lan_bypass hash:net
 	/usr/local/bin/ss-nat -s '{{ server }}' -l 1082 -o -I '{{ lan_interface }}' -i '{{ routing_rules_directory }}/{{ china_ip_list_filename }}'
 	ipset restore -! -f '{{ routing_rules_directory }}/ss_spec.ipset'
