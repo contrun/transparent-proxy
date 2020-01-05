@@ -74,5 +74,17 @@
   vars_files:
     - "vars/main.yml"
     - [ "vars/main.local.yml" ]
-  roles:
-    - role: "{{ role }}"
+  tasks:
+    - include_role:
+        name: "{{ my_role }}"
+      loop:
+        - bbr
+        - caddy
+        - v2ray-server
+        - shadowsocks-libev-server
+      loop_control:
+          loop_var: my_role
+      when: "role in ['all', 'all-servers']"
+    - include_role:
+        name: "{{ role }}"
+      when: "not role in ['all', 'all-servers']"
