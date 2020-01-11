@@ -6,21 +6,60 @@ start() {
         dnsmasq --no-resolv --bind-interfaces --interface=lo --listen-address '{{ dns_server_address }}' --conf-file='{{ remote_prefix }}/{{ dnsmasq_conf_name }}' --no-daemon
 }
 
+change_resolv_conf_with_bind_mount() {
+        # https://stackoverflow.com/questions/7878707/how-to-unmount-a-busy-device
+        umount -l /etc/resolv.conf || true
+        umount -f /etc/resolv.conf || true
+        mount -o bind '/tmp/resolv.conf.tmp' /etc/resolv.conf
+}
+
+change_resolv_conf_via_symlink() {
+        # If /etc/resolv.conf is not a symlink to ours, it is a different file and it is not already backed up then back it up.
+        # We do so many checks to prevent non-idempotency, i.e. when we run this script multiple times, the backup file becomes our resolv.conf.
+        if (! ls -lha /etc/resolv.conf | grep '/tmp/resolv.conf.tmp') && (diff "/etc/resolv.conf" "/tmp/resolv.conf.tmp" || ! [ -f "/tmp/resolv.conf.bak" ]); then
+                cp "/tmp/resolv.conf.tmp" "/tmp/resolv.conf.bak"
+        fi
+        ln -sf "/tmp/resolv.conf.tmp" "/etc/resolv.conf"
+}
+
+# First we try bind mount resolv.conf to our resolv.conf, if this does not work we try symlink them.
+# We do so because bind mount will automatically lose effect on reboot, while symlink remains across reboot.
+# We use chattr to prevent resolv.conf overriden by dhcpclient etc.
+# We do not chattr on /etc/resolv.conf because this requires clean-up.
+change_resolv_conf() {
+        cp "{{ remote_prefix }}/{{ resolv_conf_name }}" '/tmp/resolv.conf.tmp'
+        chattr +i '/tmp/resolv.conf.tmp'
+        if ! change_resolv_conf_with_bind_mount; then
+                change_resolv_conf_via_symlink
+        fi
+}
+
+restore_resolv_conf_from_bind_mount() {
+        chattr -i '/tmp/resolv.conf.tmp' || true
+        umount -l /etc/resolv.conf || true
+        umount -f /etc/resolv.conf
+}
+
+restore_resolv_conf_from_symlink() {
+        cp "{{ remote_prefix }}/resolv.conf.bak" /etc/resolv.conf || rm /etc/resolv.conf
+}
+
+restore_resolv_conf() {
+        if ! restore_resolv_conf_from_bind_mount; then
+                restore_resolv_conf_from_symlink
+        fi
+}
+
 pre_start() {
         :
 }
 
 post_start() {
-        if ! ls -lha /etc/resolv.conf | grep '{{ remote_prefix }}/{{ resolv_conf_name }}'; then
-                if diff "/etc/resolv.conf" "{{ remote_prefix }}/{{ resolv_conf_name }}" || ! [ -f "{{ remote_prefix }}/resolv.conf.bak" ]; then
-                        cp "/etc/resolv.conf" "{{ remote_prefix }}/resolv.conf.bak"
-                fi
-        fi
-        ln -sf "{{ remote_prefix }}/{{ resolv_conf_name }}" "/etc/resolv.conf"
+        change_resolv_conf
 }
 
 post_stop() {
-        { cp "{{ remote_prefix }}/resolv.conf.bak" /etc/resolv.conf || rm /etc/resolv.conf; } || true
+        restore_resolv_conf
 }
 
 quit() {
