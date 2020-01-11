@@ -62,6 +62,7 @@
 - name: Install opkg packages
   shell: |
     opkg install {{ opkg_packages | join(' ') }}
+    opkg install dnsmasq-full --force-overwrite
 
 - name: Ensure directories exists
   file:
