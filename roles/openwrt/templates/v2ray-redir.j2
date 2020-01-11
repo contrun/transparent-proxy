@@ -6,10 +6,17 @@ STOP=15
 
 #PROCD_DEBUG=1
 
-CONF=/etc/v2ray/config.json
+CONF={{ program_config | default("/etc/v2ray/config.json") }}
 PROG=/opt/v2ray/v2ray
 
+# Currently, we try to stop all other service to start this service
+# as the port needed is maybe occupied.
+# We may leverage SO_REUSEPORT to do a poor man's load balance.
+# TODO: change this.
 start_service() {
+	for i in /etc/init.d/*-redir; do
+		"$i" stop
+	done
 	ipset create ss_spec_wan_ac hash:net
 	ipset create ss_spec_lan_bypass hash:net
 	/usr/local/bin/ss-nat -s '{{ server }}' -l 1082 -o -I '{{ lan_interface }}' -i '{{ routing_rules_directory }}/{{ china_ip_list_filename }}'

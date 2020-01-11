@@ -210,6 +210,14 @@
     force: yes
   when: (ssnat_stat_result.stat.exists == False) or (update == "yes")
 
+- name: Copy config to /etc
+  copy:
+    src: "./artifacts/{{ item }}-{{ server }}-config.json"
+    dest: "/etc/{{ item }}/config.json"
+    force: yes
+  notify: "restart {{ item }}-redir"
+  loop: "{{ all_programs | intersect([program]) }}"
+
 - name: Create items in init.d
   template:
     src: "{{ item }}.j2"
@@ -221,23 +229,29 @@
     - v2ray-redir
     - shadowsocks-libev-redir
 
+- name: Set variables to render redir template differently
+  set_fact:
+    program_template: "{{ program }}-redir"
+    program_instance: "{{ program }}-{{ server }}-redir"
+    program_config: "/opt/conf.d/{{ program }}/{{ program }}-{{ server }}-config.json"
+
+- name: Copy config to /opt
+  copy:
+    src: "./artifacts/{{ item }}-{{ server }}-config.json"
+    dest: "{{ program_config }}"
+    force: yes
+  loop: "{{ all_programs | intersect([program]) }}"
+
+- name: Create instance items in init.d
+  template:
+    src: "{{ program_template }}.j2"
+    dest: "/etc/init.d/{{ program_instance }}"
+    owner: root
+    group: root
+    mode: 0755
+
 - name: Stop other services
   shell: |
     [ -x "/etc/init.d/{{ item }}-redir" ] && "/etc/init.d/{{ item }}-redir" stop
   loop: "{{ all_programs | difference([program]) }}"
   notify: "restart {{ program }}-redir"
-
-- name: Copy config to /opt
-  copy:
-    src: "./artifacts/{{ item }}-{{ server }}-config.json"
-    dest: "/opt//opt/conf.d/{{ item }}/"
-    force: yes
-  loop: "{{ all_programs | intersect([program]) }}"
-
-- name: Copy config to /etc
-  copy:
-    src: "./artifacts/{{ item }}-{{ server }}-config.json"
-    dest: "/etc/{{ item }}/config.json"
-    force: yes
-  notify: "restart {{ item }}-redir"
-  loop: "{{ all_programs | intersect([program]) }}"
