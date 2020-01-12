@@ -24,6 +24,16 @@ Easier transparent non-Chinese server traffic redirection to v2ray, shadowsocks 
 
 # Example usage with aws ec2
 
+## Use terraform
+
+Use the following command to create a new ec2 instance and obtain its public ip address. Then skip to the set a-record step.
+
+```
+terraform apply -var aws_region=ap-northeast-1 -var public_key=/home/e/.ssh/id_rsa.pub
+```
+
+Or you may manually run the following aws commands.
+
 ## Import ssh public key
 ```
 key_name=my_superb_public_key
@@ -79,6 +89,13 @@ user=ubuntu
 become=yes
 letsencrypt_email=test@example.com
 ```
+
+## Set up server
+The following command will setup bbr, caddy, v2ray-server and shadowsocks-libev-server.
+```
+ansible-playbook playbook.yml -i inventory -e role=all -e host=myV2rayServer
+```
+Or you may run the following commands separately.
 
 ## Use bbr
 ```
