@@ -29,6 +29,7 @@ Easier transparent non-Chinese server traffic redirection to v2ray, shadowsocks 
 Use the following command to create a new ec2 instance and obtain its public ip address. Then skip to the set a-record step.
 
 ```
+terraform plan -var aws_region=ap-northeast-1 -var public_key=/home/e/.ssh/id_rsa.pub
 terraform apply -var aws_region=ap-northeast-1 -var public_key=/home/e/.ssh/id_rsa.pub
 ```
 
