@@ -2,18 +2,54 @@ terraform {
   required_version = ">= 0.12, < 0.13"
 }
 
-provider "aws" {
-  region = "us-east-2"
+variable "aws_region" {
+  type        = string
+  default     = "ap-northeast-1"
+  description = "aws region where ec2 instance will be created"
+}
 
+variable "instance_tag" {
+  type        = string
+  default     = "aio_proxy"
+  description = "tag of the ec2 instance to be created"
+}
+
+variable "instance_type" {
+  type        = string
+  default     = "t2.micro"
+  description = "type of the ec2 instance to be created"
+}
+
+variable "public_key" {
+  type        = string
+  default     = "/home/e/.ssh/id_rsa.pub"
+  description = "path to the ssh public key with which you can access new created ec2 instance"
+}
+
+variable "public_key_name" {
+  type        = string
+  default     = "aio_proxy_key"
+  description = "name of the key to be added to aws ec2"
+}
+
+variable "security_group_name" {
+  type        = string
+  default     = "aio_proxy"
+  description = "name of the security group to be added to ec2 instance"
+}
+
+provider "aws" {
+  region = var.aws_region
   # Allow any 2.x version of the AWS provider
   version = "~> 2.0"
 }
 
-resource "aws_key_pair" "terraform_tester" {
-  key_name   = "testers_key"
-  public_key = file("/home/e/.ssh/id_rsa.pub")
+resource "aws_key_pair" "terraform" {
+  key_name   = var.public_key_name
+  public_key = file(var.public_key)
 }
 
+# Obtain the ami of ubuntu 19.10
 data "aws_ami" "ubuntu" {
   most_recent = true
 
@@ -32,22 +68,25 @@ data "aws_ami" "ubuntu" {
 
 resource "aws_instance" "aio_proxy" {
   ami             = data.aws_ami.ubuntu.id
-  instance_type   = "t2.micro"
-  security_groups = [aws_security_group.aio_proxy.id]
-  key_name        = aws_key_pair.terraform_tester.key_name
+  instance_type   = var.instance_type
+  security_groups = [aws_security_group.aio_proxy.name]
+  key_name        = aws_key_pair.terraform.key_name
+  tags = {
+    Name = var.instance_tag
+  }
 }
 
 resource "aws_security_group" "aio_proxy" {
-  name = "aio_proxy"
+  name = var.security_group_name
 }
 
 resource "aws_security_group_rule" "allow_all_outbound" {
   type              = "egress"
   security_group_id = aws_security_group.aio_proxy.id
 
-  from_port = 0
-  to_port   = 0
-  protocol  = local.any_protocol
+  from_port   = 0
+  to_port     = 0
+  protocol    = local.any_protocol
   cidr_blocks = local.all_ips
 }
 
@@ -61,6 +100,16 @@ resource "aws_security_group_rule" "allow_http_inbound" {
   cidr_blocks = local.all_ips
 }
 
+resource "aws_security_group_rule" "allow_http_udp_inbound" {
+  type              = "ingress"
+  security_group_id = aws_security_group.aio_proxy.id
+
+  from_port   = local.http_port
+  to_port     = local.http_port
+  protocol    = local.udp_protocol
+  cidr_blocks = local.all_ips
+}
+
 resource "aws_security_group_rule" "allow_https_inbound" {
   type              = "ingress"
   security_group_id = aws_security_group.aio_proxy.id
@@ -71,7 +120,7 @@ resource "aws_security_group_rule" "allow_https_inbound" {
   cidr_blocks = local.all_ips
 }
 
-resource "aws_security_group_rule" "allow_http_inbound_udp" {
+resource "aws_security_group_rule" "allow_https_udp_inbound" {
   type              = "ingress"
   security_group_id = aws_security_group.aio_proxy.id
 
@@ -91,7 +140,7 @@ resource "aws_security_group_rule" "allow_alter_http_inbound" {
   cidr_blocks = local.all_ips
 }
 
-resource "aws_security_group_rule" "allow_alter_http_inbound_udp" {
+resource "aws_security_group_rule" "allow_alter_http_udp_inbound" {
   type              = "ingress"
   security_group_id = aws_security_group.aio_proxy.id
 
@@ -103,8 +152,8 @@ resource "aws_security_group_rule" "allow_alter_http_inbound_udp" {
 
 locals {
   http_port       = 80
-  alter_http_port = 80
-  https_port      = 80
+  alter_http_port = 8080
+  https_port      = 443
   any_port        = 0
   any_protocol    = "-1"
   tcp_protocol    = "tcp"
@@ -112,6 +161,6 @@ locals {
   all_ips         = ["0.0.0.0/0"]
 }
 
-output "image_id" {
-  value = data.aws_ami.ubuntu.id
+output "instance_ip" {
+  value = aws_instance.aio_proxy.*.public_ip
 }
