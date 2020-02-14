@@ -8,6 +8,12 @@ variable "aws_region" {
   description = "aws region where ec2 instance will be created"
 }
 
+variable "instances_count" {
+  type        = number
+  default     = 1
+  description = "number of instances to be created"
+}
+
 variable "instance_tag" {
   type        = string
   default     = "aio_proxy"
@@ -67,6 +73,7 @@ data "aws_ami" "ubuntu" {
 }
 
 resource "aws_instance" "aio_proxy" {
+  count           = var.instances_count
   ami             = data.aws_ami.ubuntu.id
   instance_type   = var.instance_type
   security_groups = [aws_security_group.aio_proxy.name]
@@ -87,6 +94,26 @@ resource "aws_security_group_rule" "allow_all_outbound" {
   from_port   = 0
   to_port     = 0
   protocol    = local.any_protocol
+  cidr_blocks = local.all_ips
+}
+
+resource "aws_security_group_rule" "allow_ssh_inbound" {
+  type              = "ingress"
+  security_group_id = aws_security_group.aio_proxy.id
+
+  from_port   = local.ssh_port
+  to_port     = local.ssh_port
+  protocol    = local.tcp_protocol
+  cidr_blocks = local.all_ips
+}
+
+resource "aws_security_group_rule" "allow_ssh_udp_inbound" {
+  type              = "ingress"
+  security_group_id = aws_security_group.aio_proxy.id
+
+  from_port   = local.ssh_port
+  to_port     = local.ssh_port
+  protocol    = local.udp_protocol
   cidr_blocks = local.all_ips
 }
 
@@ -151,6 +178,7 @@ resource "aws_security_group_rule" "allow_alter_http_udp_inbound" {
 }
 
 locals {
+  ssh_port        = 22
   http_port       = 80
   alter_http_port = 8080
   https_port      = 443
