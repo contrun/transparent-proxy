@@ -12,12 +12,12 @@
   {% endif %}
     [http.routers.v2ray]
       service = "v2ray"
-      # rule = "Host(`{{ inventory_hostname }}`) && "Path(`/v2ray`)"
-      rule = "Host(`{{ inventory_hostname }}`)"
+      # rule = "Host(`{{ server_hostname | default(inventory_hostname) }}`) && "Path(`/v2ray`)"
+      rule = "Host(`{{ server_hostname | default(inventory_hostname) }}`)"
       [http.routers.v2ray.tls]
         certResolver = "letsencrypt"
         [[http.routers.v2ray.tls.domains]]
-          main = "{{ inventory_hostname }}"
+          main = "{{ server_hostname | default(inventory_hostname) }}"
 
     [http.routers.reverse-google]
       # entryPoints = ["web"]

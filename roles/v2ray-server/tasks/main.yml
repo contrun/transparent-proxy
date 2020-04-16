@@ -26,7 +26,7 @@
 - name: Save list of v2ray server
   set_fact:
     servers:
-      - "{{ inventory_hostname }}"
+      - "{{ server_hostname | default(inventory_hostname) }}"
 
 - name: Save list of v2ray server
   set_fact:

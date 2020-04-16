@@ -4,6 +4,12 @@
     that: ansible_service_mgr == 'systemd'
     msg: "This module only works with systemd"
 
+- name: Assert enable http or https
+  assert:
+    that:
+      - caddy_enable_http or caddy_enable_https
+    msg: "Must enable http or https for caddy"
+
 - name: Get systemd version
   command: systemctl --version
   changed_when: false

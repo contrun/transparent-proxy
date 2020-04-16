@@ -14,7 +14,7 @@ variable "instances_count" {
   description = "number of instances to be created"
 }
 
-variable "instance_tag" {
+variable "instance_tag_prefix" {
   type        = string
   default     = "aio_proxy"
   description = "tag of the ec2 instance to be created"
@@ -79,7 +79,7 @@ resource "aws_instance" "aio_proxy" {
   security_groups = [aws_security_group.aio_proxy.name]
   key_name        = aws_key_pair.terraform.key_name
   tags = {
-    Name = var.instance_tag
+    Name = "${var.instance_tag_prefix}-${count.index + 1}"
   }
 }
 

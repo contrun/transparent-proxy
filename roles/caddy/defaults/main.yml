@@ -13,6 +13,10 @@ caddy_log_dir: /var/log/caddy
 caddy_log_file: stdout
 caddy_certs_dir: /etc/ssl/caddy
 caddy_http2_enabled: "true"
+caddy_enable_http: yes
+caddy_http_port: 80
+caddy_enable_https: yes
+caddy_https_port: 443
 # additional cli args to pass to caddy
 caddy_additional_args: ""
 caddy_systemd_network_dependency: True

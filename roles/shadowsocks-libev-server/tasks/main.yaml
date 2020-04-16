@@ -9,7 +9,7 @@
 - name: Save list of shadowsocks-libev server
   set_fact:
     servers:
-      - "{{ inventory_hostname }}"
+      - "{{ server_hostname | default(inventory_hostname) }}"
 
 - name: Save list of shadowsocks-libev server
   set_fact:

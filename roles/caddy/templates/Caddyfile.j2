@@ -1,11 +1,14 @@
-http://{{ inventory_hostname }} {
+{% if caddy_enable_http %}
+http://{{ server_hostname | default(inventory_hostname) }}{% if caddy_http_port != 80 %}":"+{{ caddy_http_port }}{% endif %} {
   log {{ caddy_log_dir }}/{{ caddy_log_file }}
   proxy /v2ray localhost:8964 {
     websocket
     header_upstream -Origin
   }
 }
-https://{{ inventory_hostname }}/help {
+{% endif %}
+{% if caddy_enable_https %}
+https://{{ server_hostname | default(inventory_hostname) }}{% if caddy_https_port != 443 %}":"+{{ caddy_https_port }}{% endif %}/help {
   log {{ caddy_log_dir }}/{{ caddy_log_file }}
   tls {{ letsencrypt_email }}
   root {{ artifacts_dir }}
@@ -15,7 +18,7 @@ https://{{ inventory_hostname }}/help {
 {% endif %}
   }
 }
-https://{{ inventory_hostname }} {
+https://{{ server_hostname | default(inventory_hostname) }}{% if caddy_https_port != 443 %}":"+{{ caddy_https_port }}{% endif %} {
   log {{ caddy_log_dir }}/{{ caddy_log_file }}
   tls {{ letsencrypt_email }}
   proxy /v2ray localhost:8964 {
@@ -32,14 +35,14 @@ https://{{ inventory_hostname }} {
   }
 }
 {% if cloudflare_domain is defined and cloudflare_domain|length > 0 %}
-http://{{ cloudflare_domain }} {
+http://{{ cloudflare_domain }}{% if caddy_http_port != 80 %}":"+{{ caddy_http_port }}{% endif %} {
   log {{ caddy_log_dir }}/{{ caddy_log_file }}
   proxy /v2ray localhost:8964 {
     websocket
     header_upstream -Origin
   }
 }
-https://{{ cloudflare_domain }}/help {
+https://{{ cloudflare_domain }}{% if caddy_https_port != 443 %}":"+{{ caddy_https_port }}{% endif %}/help {
   log {{ caddy_log_dir }}/{{ caddy_log_file }}
   tls {{ letsencrypt_email }}
   root {{ artifacts_dir }}
@@ -49,7 +52,7 @@ https://{{ cloudflare_domain }}/help {
 {% endif %}
   }
 }
-https://{{ cloudflare_domain }} {
+https://{{ cloudflare_domain }}{% if caddy_https_port != 443 %}":"+{{ caddy_https_port }}{% endif %} {
   log {{ caddy_log_dir }}/{{ caddy_log_file }}
   tls {{ letsencrypt_email }}
   proxy /v2ray localhost:8964 {
@@ -65,4 +68,5 @@ https://{{ cloudflare_domain }} {
     health_check /health
   }
 }
+{% endif %}
 {% endif %}
