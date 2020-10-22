@@ -92,6 +92,11 @@ letsencrypt_email=test@example.com
 ```
 
 ## Set up server
+You will need the following ansible collections.
+```
+ansible-galaxy collection install community.general ansible.posix
+```
+
 The following command will setup bbr, caddy, v2ray-server and shadowsocks-libev-server.
 ```
 ansible-playbook playbook.yml -i inventory -e role=all -e host=myV2rayServer
