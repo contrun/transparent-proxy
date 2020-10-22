@@ -1,71 +1,80 @@
+{% set caddy_enable_http = caddy_enable_http | default(True) -%}
+{% set caddy_enable_https = caddy_enable_https | default(True) -%}
+{% set caddy_http_port = caddy_http_port | default(80) -%}
+{% set caddy_https_port = caddy_https_port | default(443) -%}
+
 {% if caddy_enable_http %}
 http://{{ server_hostname | default(inventory_hostname) }}{% if caddy_http_port != 80 %}":"+{{ caddy_http_port }}{% endif %} {
-  log {{ caddy_log_dir }}/{{ caddy_log_file }}
-  proxy /v2ray localhost:8964 {
-    websocket
-    header_upstream -Origin
+  log {
+    output file {{ caddy_log_dir }}/{{ caddy_log_file }}
+  }
+  reverse_proxy /v2ray localhost:8964 {
+    header_up -Origin
   }
 }
 {% endif %}
 {% if caddy_enable_https %}
 https://{{ server_hostname | default(inventory_hostname) }}{% if caddy_https_port != 443 %}":"+{{ caddy_https_port }}{% endif %}/help {
-  log {{ caddy_log_dir }}/{{ caddy_log_file }}
-  tls {{ letsencrypt_email }}
-  root {{ artifacts_dir }}
-  basicauth / {{ caddy_basicauth_username }} {{ caddy_basicauth_password }} {
-{% if caddy_basicauth_realm is defined and caddy_basicauth_realm|length > 0 %}
-    realm "{{ caddy_basicauth_realm }}"
-{% endif %}
+  log {
+    output file {{ caddy_log_dir }}/{{ caddy_log_file }}
   }
+  tls {{ letsencrypt_email }}
+  root * {{ artifacts_dir }}
+  {% if caddy_basicauth_username is defined and caddy_basicauth_password is defined %}
+  basicauth /* bcrypt {% if caddy_basicauth_realm is defined and caddy_basicauth_realm|length > 0 %}"{{ caddy_basicauth_realm }}"{% endif %} {
+    {{ caddy_basicauth_username }} {{ caddy_basicauth_password }}
+  }
+  {% endif %}
 }
 https://{{ server_hostname | default(inventory_hostname) }}{% if caddy_https_port != 443 %}":"+{{ caddy_https_port }}{% endif %} {
-  log {{ caddy_log_dir }}/{{ caddy_log_file }}
+  log {
+    output file {{ caddy_log_dir }}/{{ caddy_log_file }}
+  }
   tls {{ letsencrypt_email }}
-  proxy /v2ray localhost:8964 {
-    websocket
-    header_upstream -Origin
+  reverse_proxy /v2ray localhost:8964 {
+    header_up -Origin
   }
-  proxy /dns-query {{ doh_servers | map('quote') | join(' ') }} {
-    policy first
-    health_check /health
+  reverse_proxy /dns-query {{ doh_servers | map('quote') | join(' ') }} {
+    lb_policy random
   }
-  proxy /resolve https://dns.google.com {
-    policy first
-    health_check /health
+  reverse_proxy /resolve https://dns.google.com {
+    lb_policy random
   }
 }
 {% if cloudflare_domain is defined and cloudflare_domain|length > 0 %}
 http://{{ cloudflare_domain }}{% if caddy_http_port != 80 %}":"+{{ caddy_http_port }}{% endif %} {
-  log {{ caddy_log_dir }}/{{ caddy_log_file }}
-  proxy /v2ray localhost:8964 {
-    websocket
-    header_upstream -Origin
+  log {
+    output file {{ caddy_log_dir }}/{{ caddy_log_file }}
+  }
+  reverse_proxy /v2ray localhost:8964 {
+    header_up -Origin
   }
 }
 https://{{ cloudflare_domain }}{% if caddy_https_port != 443 %}":"+{{ caddy_https_port }}{% endif %}/help {
-  log {{ caddy_log_dir }}/{{ caddy_log_file }}
-  tls {{ letsencrypt_email }}
-  root {{ artifacts_dir }}
-  basicauth / {{ caddy_basicauth_username }} {{ caddy_basicauth_password }} {
-{% if caddy_basicauth_realm is defined and caddy_basicauth_realm|length > 0 %}
-    realm "{{ caddy_basicauth_realm }}"
-{% endif %}
+  log {
+    output file {{ caddy_log_dir }}/{{ caddy_log_file }}
   }
+  tls {{ letsencrypt_email }}
+  root * {{ artifacts_dir }}
+  {% if caddy_basicauth_username is defined and caddy_basicauth_password is defined %}
+  basicauth /* bcrypt {% if caddy_basicauth_realm is defined and caddy_basicauth_realm|length > 0 %}"{{ caddy_basicauth_realm }}"{% endif %} {
+    {{ caddy_basicauth_username }} {{ caddy_basicauth_password }}
+  }
+  {% endif %}
 }
 https://{{ cloudflare_domain }}{% if caddy_https_port != 443 %}":"+{{ caddy_https_port }}{% endif %} {
-  log {{ caddy_log_dir }}/{{ caddy_log_file }}
+  log {
+    output file {{ caddy_log_dir }}/{{ caddy_log_file }}
+  }
   tls {{ letsencrypt_email }}
-  proxy /v2ray localhost:8964 {
-    websocket
-    header_upstream -Origin
+  reverse_proxy /v2ray localhost:8964 {
+    header_up -Origin
   }
-  proxy /dns-query {{ doh_servers | map('quote') | join(' ') }} {
-    policy first
-    health_check /health
+  reverse_proxy /dns-query {{ doh_servers | map('quote') | join(' ') }} {
+    lb_policy random
   }
-  proxy /resolve https://dns.google.com {
-    policy first
-    health_check /health
+  reverse_proxy /resolve https://dns.google.com {
+    lb_policy random
   }
 }
 {% endif %}
