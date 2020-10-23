@@ -67,3 +67,6 @@ dnsmasq_china_list_name: "dnsmasq-china-list"
 dnsmasq_conf_name: "dnsmasq.conf"
 resolv_conf_name: "resolv.conf"
 remote_prefix: "/opt/transparent-proxy"
+caddy_setcap: true
+caddy_systemd_capabilities_enabled: true
+caddy_config: "{{ lookup('template', 'templates/Caddyfile.j2') }}"

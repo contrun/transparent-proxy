@@ -98,18 +98,6 @@
     owner: "{{ caddy_user }}"
     mode: 0775
 
-- name: Create Caddyfile with template
-  template:
-    src: Caddyfile.j2
-    dest: "{{ caddy_conf_dir }}/Caddyfile"
-    owner: "{{ caddy_user }}"
-    mode: 0640
-    force: yes
-  notify:
-    - Reload caddy
-  register: st
-  ignore_errors: True
-
 - name: Create Caddyfile
   copy:
     content: "{{ caddy_config }}"
@@ -118,7 +106,6 @@
     mode: 0640
   notify:
     - Reload caddy
-  when: st.failed
 
 - name: Template systemd service
   template:
