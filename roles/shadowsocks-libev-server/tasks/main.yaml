@@ -20,6 +20,7 @@
   template:
     dest: "{{ss_server_config_dir}}/{{ss_server_instance}}.json"
     src: server.json.j2
+    mode: 444
   notify: Restart shadowsocks-libev-server@
 
 - name: Enable and start ss-server service
