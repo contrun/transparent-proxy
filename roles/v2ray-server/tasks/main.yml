@@ -5,11 +5,11 @@
 
 - name: Check that the v2ray bin exists
   stat:
-    path: "/usr/bin/v2ray/v2ray"
+    path: "/usr/local/bin/v2ray"
   register: v2ray_bin_stat_result
 
 - name: Install v2ray
-  shell: "bash <(curl -L -s https://raw.githubusercontent.com/v2ray/v2ray-core/master/release/install-release.sh)"
+  shell: "bash <(curl -L -s https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-release.sh)"
   args:
     executable: /bin/bash
   become: on
@@ -19,7 +19,7 @@
 - name: Copy v2ray server config
   template:
     src: "server-config.json.j2"
-    dest: /etc/v2ray/config.json
+    dest: /usr/local/etc/v2ray/config.json
   notify:
     - Restart v2ray
 
